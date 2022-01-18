@@ -1,6 +1,6 @@
-module SvgCommand exposing (Command(..), TextSizeRequest)
+module SvgControl.SvgCommand exposing (Command(..), TextSizeRequest)
 
-import SvgThings exposing (ControlId)
+import SvgControl.SvgThings exposing (ControlId)
 
 
 type alias TextSizeRequest =

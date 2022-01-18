@@ -1,4 +1,4 @@
-module Util exposing (RectSize, andMap)
+module SvgControl.Util exposing (RectSize, andMap)
 
 import Json.Decode as JD exposing (Decoder)
 

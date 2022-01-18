@@ -1,10 +1,10 @@
-module SvgTouch exposing (Msg(..), Touch, extractFirstRectTouchSE, extractFirstTouch, extractFirstTouchInRect, extractFirstTouchSE, extractTouchDict, extractTouches, makeTd, parseTouch, parseTouchCount)
+module SvgControl.SvgTouch exposing (Msg(..), Touch, extractFirstRectTouchSE, extractFirstTouch, extractFirstTouchInRect, extractFirstTouchSE, extractTouchDict, extractTouches, makeTd, parseTouch, parseTouchCount)
 
 import Dict
 import Json.Decode as JD
 import List
 import String
-import SvgThings
+import SvgControl.SvgThings as SvgThings
 
 
 

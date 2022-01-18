@@ -1,13 +1,13 @@
-module SvgTextSize exposing (Metrics, TextSizeReply, calcText, calcTextSvg, calcTextSvgM, computeFontScaling, controlFontFamily, decodeMetrics, decodeTextSizeReply, encodeTextSizeRequest, estimateTextWidth, onTextSizeReply, resizeCommand, sizingFont)
+module SvgControl.SvgTextSize exposing (Metrics, TextSizeReply, calcText, calcTextSvg, calcTextSvgM, computeFontScaling, controlFontFamily, decodeMetrics, decodeTextSizeReply, encodeTextSizeRequest, estimateTextWidth, onTextSizeReply, resizeCommand, sizingFont)
 
 import Json.Decode as JD
 import Json.Encode as JE
 import Svg exposing (Attribute, Svg, g, rect, svg, text, text_)
 import Svg.Attributes exposing (..)
-import SvgCommand exposing (Command(..), TextSizeRequest)
-import SvgThings exposing (ControlId, Rect, UiColor(..), UiTheme, decodeControlId, encodeControlId)
+import SvgControl.SvgCommand exposing (Command(..), TextSizeRequest)
+import SvgControl.SvgThings exposing (ControlId, Rect, UiColor(..), UiTheme, decodeControlId, encodeControlId)
+import SvgControl.Util exposing (andMap)
 import Template exposing (render, template, withString, withValue)
-import Util exposing (andMap)
 
 
 controlFontFamily : String
@@ -111,7 +111,7 @@ onTextSizeReply theme tsr model =
 resizeCommand :
     { m
         | label : String
-        , cid : SvgThings.ControlId
+        , cid : ControlId
         , stringWidth : Maybe Float
     }
     -> Command
@@ -123,7 +123,7 @@ resizeCommand model =
 
             else
                 RequestTextWidth <|
-                    SvgCommand.TextSizeRequest model.label sizingFont model.cid
+                    TextSizeRequest model.label sizingFont model.cid
 
         Just _ ->
             None

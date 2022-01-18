@@ -7,11 +7,11 @@ import Json.Decode as JD
 import List exposing (..)
 import Svg exposing (Attribute, Svg, g, rect, svg, text)
 import Svg.Attributes as SA exposing (height, viewBox, width, x, y)
-import SvgCommand exposing (Command(..))
-import SvgControl
-import SvgTextSize exposing (TextSizeReply)
-import SvgThings exposing (Orientation(..), UiColor(..), UiTheme)
-import Util exposing (RectSize, andMap)
+import SvgControl.SvgCommand exposing (Command(..))
+import SvgControl.SvgControl as SvgControl
+import SvgControl.SvgTextSize exposing (TextSizeReply)
+import SvgControl.SvgThings exposing (Orientation(..), Rect, SRect, UiColor(..), UiTheme, colorFun, defaultColors, toSRect)
+import SvgControl.Util exposing (RectSize, andMap)
 import VirtualDom as VD
 
 
@@ -53,8 +53,8 @@ jsSpec =
 
 type alias Model =
     { title : String
-    , mahrect : SvgThings.Rect
-    , srect : SvgThings.SRect
+    , mahrect : Rect
+    , srect : SRect
     , spec : Spec
     , control : SvgControl.Model
     , windowSize : RectSize
@@ -123,14 +123,14 @@ resize : RectSize -> Model -> ( Model, Command )
 resize newSize model =
     let
         nr =
-            SvgThings.Rect 0 0 (round (newSize.width - 1)) (round (newSize.height - 4))
+            Rect 0 0 (round (newSize.width - 1)) (round (newSize.height - 4))
 
         ( ctrl, cmd ) =
             SvgControl.resize model.control nr
     in
     ( { model
         | mahrect = nr
-        , srect = SvgThings.toSRect nr
+        , srect = toSRect nr
         , windowSize = newSize
         , control = ctrl
       }
@@ -144,7 +144,7 @@ onTextSize tsr model =
 
 
 init :
-    SvgThings.Rect
+    Rect
     -> Spec
     -> ( Model, Command )
 init rect spec =
@@ -156,17 +156,17 @@ init rect spec =
             SvgControl.update_list (Maybe.withDefault [] spec.state) conmod
 
         colors =
-            SvgThings.colorFun
-                (spec.controlsColor |> Maybe.withDefault (SvgThings.defaultColors Controls))
-                (spec.labelsColor |> Maybe.withDefault (SvgThings.defaultColors Labels))
-                (spec.textColor |> Maybe.withDefault (SvgThings.defaultColors Text))
-                (spec.pressedColor |> Maybe.withDefault (SvgThings.defaultColors Pressed))
-                (spec.unpressedColor |> Maybe.withDefault (SvgThings.defaultColors Unpressed))
-                (spec.backgroundColor |> Maybe.withDefault (SvgThings.defaultColors Background))
+            colorFun
+                (spec.controlsColor |> Maybe.withDefault (defaultColors Controls))
+                (spec.labelsColor |> Maybe.withDefault (defaultColors Labels))
+                (spec.textColor |> Maybe.withDefault (defaultColors Text))
+                (spec.pressedColor |> Maybe.withDefault (defaultColors Pressed))
+                (spec.unpressedColor |> Maybe.withDefault (defaultColors Unpressed))
+                (spec.backgroundColor |> Maybe.withDefault (defaultColors Background))
     in
     ( Model spec.title
         rect
-        (SvgThings.toSRect rect)
+        (toSRect rect)
         spec
         updmod
         (RectSize 0 0)

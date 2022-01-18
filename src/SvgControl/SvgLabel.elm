@@ -1,4 +1,4 @@
-module SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, init, jsSpec, jsUpdateMessage, resize, update, view)
+module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, init, jsSpec, jsUpdateMessage, resize, update, view)
 
 import Html exposing (Html)
 import Html.Events exposing (onClick, onMouseDown, onMouseOut, onMouseUp)
@@ -7,9 +7,9 @@ import Json.Encode as JE
 import String
 import Svg exposing (Attribute, Svg, g, rect, svg, text)
 import Svg.Attributes exposing (..)
-import SvgCommand exposing (Command(..))
-import SvgTextSize exposing (..)
-import SvgThings exposing (UiColor(..), UiTheme)
+import SvgControl.SvgCommand exposing (Command(..))
+import SvgControl.SvgTextSize exposing (..)
+import SvgControl.SvgThings exposing (ControlId, Rect, SRect, UiColor(..), UiTheme, decodeControlId, encodeControlId)
 import Task
 import Template exposing (render, template)
 import Time exposing (..)
@@ -33,9 +33,9 @@ type alias Model =
     { name : String
     , label : String
     , stringWidth : Maybe Float
-    , cid : SvgThings.ControlId
-    , rect : SvgThings.Rect
-    , srect : SvgThings.SRect
+    , cid : ControlId
+    , rect : Rect
+    , srect : SRect
     , textSvg : List (Svg ())
     }
 
@@ -46,7 +46,7 @@ type Msg
 
 
 type alias UpdateMessage =
-    { controlId : SvgThings.ControlId
+    { controlId : ControlId
     , label : String
     }
 
@@ -54,13 +54,13 @@ type alias UpdateMessage =
 jsUpdateMessage : JD.Decoder UpdateMessage
 jsUpdateMessage =
     JD.map2 UpdateMessage
-        (JD.field "controlId" SvgThings.decodeControlId)
+        (JD.field "controlId" decodeControlId)
         (JD.field "label" JD.string)
 
 
 init :
-    SvgThings.Rect
-    -> SvgThings.ControlId
+    Rect
+    -> ControlId
     -> Spec
     -> ( Model, Command )
 init rect cid spec =
@@ -71,7 +71,7 @@ init rect cid spec =
                 Nothing
                 cid
                 rect
-                (SvgThings.SRect (String.fromInt rect.x)
+                (SRect (String.fromInt rect.x)
                     (String.fromInt rect.y)
                     (String.fromInt rect.w)
                     (String.fromInt rect.h)
@@ -95,7 +95,7 @@ update msg model =
             ( model, None )
 
 
-resize : Model -> SvgThings.Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command )
 resize model rect =
     let
         -- ts = calcTextSvgM theme model
@@ -103,7 +103,7 @@ resize model rect =
             { model
                 | rect = rect
                 , srect =
-                    SvgThings.SRect (String.fromInt rect.x)
+                    SRect (String.fromInt rect.x)
                         (String.fromInt rect.y)
                         (String.fromInt rect.w)
                         (String.fromInt rect.h)

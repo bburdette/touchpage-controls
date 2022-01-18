@@ -1,4 +1,4 @@
-module SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, update, view)
+module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, update, view)
 
 import Dict
 import Html exposing (Html)
@@ -7,10 +7,10 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Svg exposing (Attribute, Svg, g, rect, svg, text)
 import Svg.Attributes exposing (..)
-import SvgCommand exposing (Command(..))
-import SvgTextSize exposing (calcTextSvg, resizeCommand)
-import SvgThings exposing (UiColor(..), UiTheme)
-import SvgTouch as ST
+import SvgControl.SvgCommand exposing (Command(..))
+import SvgControl.SvgTextSize exposing (calcTextSvg, resizeCommand)
+import SvgControl.SvgThings exposing (ControlId, Rect, SRect, UiColor(..), UiTheme, decodeControlId, encodeControlId)
+import SvgControl.SvgTouch as ST
 import Task
 import VirtualDom as VD
 
@@ -32,9 +32,9 @@ type alias Model =
     { name : String
     , label : String
     , stringWidth : Maybe Float
-    , cid : SvgThings.ControlId
-    , rect : SvgThings.Rect
-    , srect : SvgThings.SRect
+    , cid : ControlId
+    , rect : Rect
+    , srect : SRect
     , pressed : Bool
     , textSvg : List (Svg ())
     , touchonly : Bool
@@ -42,8 +42,8 @@ type alias Model =
 
 
 init :
-    SvgThings.Rect
-    -> SvgThings.ControlId
+    Rect
+    -> ControlId
     -> Spec
     -> ( Model, Command )
 init rect cid spec =
@@ -54,7 +54,7 @@ init rect cid spec =
                 Nothing
                 cid
                 rect
-                (SvgThings.SRect (String.fromInt rect.x)
+                (SRect (String.fromInt rect.x)
                     (String.fromInt rect.y)
                     (String.fromInt rect.w)
                     (String.fromInt rect.h)
@@ -91,7 +91,7 @@ type UpdateType
 
 
 type alias UpdateMessage =
-    { controlId : SvgThings.ControlId
+    { controlId : ControlId
     , updateType : Maybe UpdateType
     , label : Maybe String
     }
@@ -102,7 +102,7 @@ encodeUpdateMessage um =
     let
         outlist1 =
             [ ( "controlType", JE.string "button" )
-            , ( "controlId", SvgThings.encodeControlId um.controlId )
+            , ( "controlId", encodeControlId um.controlId )
             ]
 
         outlist2 =
@@ -137,7 +137,7 @@ encodeUpdateType ut =
 jsUpdateMessage : JD.Decoder UpdateMessage
 jsUpdateMessage =
     JD.map3 UpdateMessage
-        (JD.field "controlId" SvgThings.decodeControlId)
+        (JD.field "controlId" decodeControlId)
         (JD.maybe (JD.field "state" JD.string |> JD.andThen jsUpdateType))
         (JD.maybe (JD.field "label" JD.string))
 
@@ -236,14 +236,14 @@ pressup model ut =
     )
 
 
-resize : Model -> SvgThings.Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command )
 resize model rect =
     let
         newmodel =
             { model
                 | rect = rect
                 , srect =
-                    SvgThings.SRect (String.fromInt rect.x)
+                    SRect (String.fromInt rect.x)
                         (String.fromInt rect.y)
                         (String.fromInt rect.w)
                         (String.fromInt rect.h)

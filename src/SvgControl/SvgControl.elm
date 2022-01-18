@@ -1,4 +1,4 @@
-module SvgControl exposing (ID, Model(..), Msg(..), Spec(..), SzModel, SzMsg(..), SzSpec, border, controlId, controlName, findControl, firstJust, init, jsCs, jsSpec, jsSzSpec, jsUmType, jsUpdateMessage, mkRlist, myTail, onTextSize, processProps, resize, szFindControl, szOnTextSize, szinit, szresize, szupdate, szview, toCtrlMsg, tupMap2, update, update_list, view, viewSvgControls, zip)
+module SvgControl.SvgControl exposing (ID, Model(..), Msg(..), Spec(..), SzModel, SzMsg(..), SzSpec, border, controlId, controlName, findControl, firstJust, init, jsCs, jsSpec, jsSzSpec, jsUmType, jsUpdateMessage, mkRlist, myTail, onTextSize, processProps, resize, szFindControl, szOnTextSize, szinit, szresize, szupdate, szview, toCtrlMsg, tupMap2, update, update_list, view, viewSvgControls, zip)
 
 import Dict exposing (..)
 import Html
@@ -6,13 +6,13 @@ import Json.Decode as JD
 import List exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
-import SvgButton
-import SvgCommand exposing (Command(..))
-import SvgLabel
-import SvgSlider
-import SvgTextSize exposing (TextSizeReply, calcTextSvg, resizeCommand)
-import SvgThings exposing (Orientation(..), UiColor(..), UiTheme)
-import SvgXY
+import SvgControl.SvgButton as SvgButton
+import SvgControl.SvgCommand exposing (Command(..))
+import SvgControl.SvgLabel as SvgLabel
+import SvgControl.SvgSlider as SvgSlider
+import SvgControl.SvgTextSize exposing (TextSizeReply, calcTextSvg, onTextSizeReply)
+import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, UiColor(..), UiTheme, containsXY, hrects, hrectsp, jsOrientation, shrinkRect, vrects, vrectsp)
+import SvgControl.SvgXY as SvgXY
 import Task
 import VirtualDom as VD
 
@@ -54,21 +54,21 @@ findControl : Int -> Int -> Model -> Maybe Model
 findControl x y mod =
     case mod of
         CmButton bmod ->
-            if SvgThings.containsXY bmod.rect x y then
+            if containsXY bmod.rect x y then
                 Just mod
 
             else
                 Nothing
 
         CmSlider smod ->
-            if SvgThings.containsXY smod.rect x y then
+            if containsXY smod.rect x y then
                 Just mod
 
             else
                 Nothing
 
         CmXY smod ->
-            if SvgThings.containsXY smod.rect x y then
+            if containsXY smod.rect x y then
                 Just mod
 
             else
@@ -81,7 +81,7 @@ findControl x y mod =
             szFindControl szmod x y
 
 
-controlId : Model -> SvgThings.ControlId
+controlId : Model -> ControlId
 controlId mod =
     case mod of
         CmButton bmod ->
@@ -124,7 +124,7 @@ tupMap2 fa ab =
     ( fa (Tuple.first ab), Tuple.second ab )
 
 
-resize : Model -> SvgThings.Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command )
 resize model rect =
     let
         aptg =
@@ -132,16 +132,16 @@ resize model rect =
     in
     case model of
         CmButton mod ->
-            aptg CmButton <| SvgButton.resize mod (SvgThings.shrinkRect border rect)
+            aptg CmButton <| SvgButton.resize mod (shrinkRect border rect)
 
         CmSlider mod ->
-            aptg CmSlider <| SvgSlider.resize mod (SvgThings.shrinkRect border rect)
+            aptg CmSlider <| SvgSlider.resize mod (shrinkRect border rect)
 
         CmXY mod ->
-            aptg CmXY <| SvgXY.resize mod (SvgThings.shrinkRect border rect)
+            aptg CmXY <| SvgXY.resize mod (shrinkRect border rect)
 
         CmLabel mod ->
-            aptg CmLabel <| SvgLabel.resize mod (SvgThings.shrinkRect border rect)
+            aptg CmLabel <| SvgLabel.resize mod (shrinkRect border rect)
 
         CmSizer mod ->
             aptg CmSizer <| szresize mod rect
@@ -220,7 +220,7 @@ myTail lst =
             []
 
 
-toCtrlMsg : SvgThings.ControlId -> Msg -> Msg
+toCtrlMsg : ControlId -> Msg -> Msg
 toCtrlMsg id msg =
     case head id of
         Nothing ->
@@ -235,18 +235,18 @@ onTextSize theme tsr model =
     case model of
         CmButton m ->
             CmButton <|
-                SvgTextSize.onTextSizeReply theme tsr m
+                onTextSizeReply theme tsr m
 
         CmSlider m ->
             CmSlider <|
-                SvgTextSize.onTextSizeReply theme tsr m
+                onTextSizeReply theme tsr m
 
         CmXY m ->
             CmXY <|
-                SvgTextSize.onTextSizeReply theme tsr m
+                onTextSizeReply theme tsr m
 
         CmLabel m ->
-            CmLabel <| SvgTextSize.onTextSizeReply theme tsr m
+            CmLabel <| onTextSizeReply theme tsr m
 
         CmSizer m ->
             CmSizer <| szOnTextSize theme tsr m
@@ -313,8 +313,8 @@ update_list msgs model =
 
 
 init :
-    SvgThings.Rect
-    -> SvgThings.ControlId
+    Rect
+    -> ControlId
     -> Spec
     -> ( Model, Command )
 init rect cid spec =
@@ -324,16 +324,16 @@ init rect cid spec =
     in
     case spec of
         CsButton s ->
-            aptg CmButton <| SvgButton.init (SvgThings.shrinkRect border rect) cid s
+            aptg CmButton <| SvgButton.init (shrinkRect border rect) cid s
 
         CsSlider s ->
-            aptg CmSlider <| SvgSlider.init (SvgThings.shrinkRect border rect) cid s
+            aptg CmSlider <| SvgSlider.init (shrinkRect border rect) cid s
 
         CsXY s ->
-            aptg CmXY <| SvgXY.init (SvgThings.shrinkRect border rect) cid s
+            aptg CmXY <| SvgXY.init (shrinkRect border rect) cid s
 
         CsLabel s ->
-            aptg CmLabel <| SvgLabel.init (SvgThings.shrinkRect border rect) cid s
+            aptg CmLabel <| SvgLabel.init (shrinkRect border rect) cid s
 
         CsSizer s ->
             aptg CmSizer <| szinit rect cid s
@@ -365,7 +365,7 @@ view theme model =
 {-| json spec
 -}
 type alias SzSpec =
-    { orientation : SvgThings.Orientation
+    { orientation : Orientation
     , proportions : Maybe (List Float)
     , controls : List Spec
     }
@@ -387,7 +387,7 @@ processProps lst =
 jsSzSpec : JD.Decoder SzSpec
 jsSzSpec =
     JD.map3 SzSpec
-        (JD.field "orientation" JD.string |> JD.andThen SvgThings.jsOrientation)
+        (JD.field "orientation" JD.string |> JD.andThen jsOrientation)
         (JD.maybe (JD.field "proportions" (JD.list JD.float))
             |> JD.andThen
                 (\x -> JD.succeed (Maybe.map processProps x))
@@ -396,10 +396,10 @@ jsSzSpec =
 
 
 type alias SzModel =
-    { cid : SvgThings.ControlId
-    , rect : SvgThings.Rect
+    { cid : ControlId
+    , rect : Rect
     , controls : Dict ID Model
-    , orientation : SvgThings.Orientation
+    , orientation : Orientation
     , proportions : Maybe (List Float)
     }
 
@@ -410,7 +410,7 @@ type alias ID =
 
 szFindControl : SzModel -> Int -> Int -> Maybe Model
 szFindControl mod x y =
-    if SvgThings.containsXY mod.rect x y then
+    if containsXY mod.rect x y then
         firstJust (findControl x y) (values mod.controls)
 
     else
@@ -489,7 +489,7 @@ szOnTextSize theme tsr model =
             model
 
 
-szresize : SzModel -> SvgThings.Rect -> ( SzModel, Command )
+szresize : SzModel -> Rect -> ( SzModel, Command )
 szresize model rect =
     let
         clist =
@@ -516,29 +516,29 @@ szresize model rect =
     ( nm, Batch cmds )
 
 
-mkRlist : SvgThings.Orientation -> SvgThings.Rect -> Int -> Maybe (List Float) -> List SvgThings.Rect
+mkRlist : Orientation -> Rect -> Int -> Maybe (List Float) -> List Rect
 mkRlist orientation rect count mbproportions =
     case orientation of
-        SvgThings.Horizontal ->
+        Horizontal ->
             case mbproportions of
                 Nothing ->
-                    SvgThings.hrects rect count
+                    hrects rect count
 
                 Just p ->
-                    SvgThings.hrectsp rect count p
+                    hrectsp rect count p
 
-        SvgThings.Vertical ->
+        Vertical ->
             case mbproportions of
                 Nothing ->
-                    SvgThings.vrects rect count
+                    vrects rect count
 
                 Just p ->
-                    SvgThings.vrectsp rect count p
+                    vrectsp rect count p
 
 
 szinit :
-    SvgThings.Rect
-    -> SvgThings.ControlId
+    Rect
+    -> ControlId
     -> SzSpec
     -> ( SzModel, Command )
 szinit rect cid szspec =
