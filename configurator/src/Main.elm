@@ -5,13 +5,13 @@ import Browser.Events as BE
 import Html
 import Json.Decode as JD
 import Json.Encode as JE
-import SvgCommand exposing (Command(..))
-import SvgControl
+import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
+import SvgControl.SvgControl as SvgControl
+import SvgControl.SvgLabel as SvgLabel
+import SvgControl.SvgTextSize as SvgTextSize exposing (TextSizeReply, decodeTextSizeReply, encodeTextSizeRequest)
+import SvgControl.SvgThings as SvgThings
+import SvgControl.Util exposing (RectSize)
 import SvgControlPage
-import SvgLabel
-import SvgTextSize exposing (TextSizeReply, decodeTextSizeReply, encodeTextSizeRequest)
-import SvgThings
-import Util exposing (RectSize)
 import WebSocket
 
 
