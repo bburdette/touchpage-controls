@@ -96,6 +96,25 @@ type UpdateMessage
     | UmSizer UpdateMessage
 
 
+encodeUpdateMessage : UpdateMessage -> JD.Value
+encodeUpdateMessage um =
+    case um of
+        UmButton u ->
+            SvgButton.encodeUpdateMessage u
+
+        UmSlider u ->
+            SvgSlider.encodeUpdateMessage u
+
+        UmXY u ->
+            SvgXY.encodeUpdateMessage u
+
+        UmLabel u ->
+            SvgLabel.encodeUpdateMessage u
+
+        UmSizer u ->
+            encodeUpdateMessage u
+
+
 findControl : Int -> Int -> Model -> Maybe Model
 findControl x y mod =
     case mod of

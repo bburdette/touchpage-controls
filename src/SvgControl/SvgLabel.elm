@@ -1,4 +1,4 @@
-module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, init, jsSpec, jsUpdateMessage, resize, update, view)
+module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, encodeUpdateMessage, init, jsSpec, jsUpdateMessage, resize, update, view)
 
 import Html exposing (Html)
 import Html.Events exposing (onClick, onMouseDown, onMouseOut, onMouseUp)
@@ -56,6 +56,15 @@ jsUpdateMessage =
     JD.map2 UpdateMessage
         (JD.field "controlId" decodeControlId)
         (JD.field "label" JD.string)
+
+
+encodeUpdateMessage : UpdateMessage -> JD.Value
+encodeUpdateMessage um =
+    JE.object
+        [ ( "controlType", JE.string "label" )
+        , ( "controlId", encodeControlId um.controlId )
+        , ( "label", JE.string um.label )
+        ]
 
 
 init :
