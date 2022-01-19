@@ -2,9 +2,11 @@ port module Main exposing (init, main)
 
 import Browser
 import Browser.Events as BE
+import Element as E
 import Html
 import Json.Decode as JD
 import Json.Encode as JE
+import LayoutEdit
 import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
 import SvgControl.SvgControl as SvgControl
 import SvgControl.SvgLabel as SvgLabel
@@ -15,10 +17,13 @@ import SvgControlPage
 import WebSocket
 
 
-port receiveSocketMsg : (JD.Value -> msg) -> Sub msg
 
-
-port sendSocketCommand : JE.Value -> Cmd msg
+-- port receiveSocketMsg : (JD.Value -> msg) -> Sub msg
+-- port sendSocketCommand : JE.Value -> Cmd msg
+-- wssend =
+--     WebSocket.send sendSocketCommand
+-- wsreceive =
+--     receiveSocketMsg <| WebSocket.receive WsMsg
 
 
 port requestTextSize : JE.Value -> Cmd msg
@@ -27,18 +32,10 @@ port requestTextSize : JE.Value -> Cmd msg
 port receiveTextMetrics : (JD.Value -> msg) -> Sub msg
 
 
-wssend =
-    WebSocket.send sendSocketCommand
-
-
-wsreceive =
-    receiveSocketMsg <| WebSocket.receive WsMsg
-
-
 type Msg
     = WsMsg (Result JD.Error WebSocket.WebSocketMsg)
     | TextSize (Result JD.Error TextSizeReply)
-    | ScpMsg SvgControlPage.Msg
+    | LeMsg LayoutEdit.Msg
 
 
 type alias Flags =
@@ -49,32 +46,35 @@ type alias Flags =
     }
 
 
+type State
+    = LayoutEdit LayoutEdit.Model
+
+
 type alias Model =
-    { scpModel : SvgControlPage.Model
-    , wsUrl : String
+    { state : State
+    , size : RectSize
     }
 
 
-commandToCmd : SvgCommand.Command -> Cmd Msg
-commandToCmd scmd =
-    case scmd of
-        Send dta ->
-            wssend <|
-                WebSocket.Send
-                    { name = "touchpage"
-                    , content = dta
-                    }
 
-        RequestTextWidth rtw ->
-            requestTextSize <|
-                encodeTextSizeRequest <|
-                    rtw
-
-        None ->
-            Cmd.none
-
-        Batch cmds ->
-            Cmd.batch (List.map commandToCmd cmds)
+-- commandToCmd : SvgCommand.Command -> Cmd Msg
+-- commandToCmd scmd =
+--     case scmd of
+--         Send dta ->
+--             Cmd.none
+--         -- wssend <|
+--         --     WebSocket.Send
+--         --         { name = "touchpage"
+--         --         , content = dta
+--         --         }
+--         RequestTextWidth rtw ->
+--             requestTextSize <|
+--                 encodeTextSizeRequest <|
+--                     rtw
+--         None ->
+--             Cmd.none
+--         Batch cmds ->
+--             Cmd.batch (List.map commandToCmd cmds)
 
 
 main : Program Flags Model Msg
@@ -87,81 +87,66 @@ main =
                         init flags
                 in
                 ( mod
-                , Cmd.batch
-                    [ wssend <|
-                        WebSocket.Connect
-                            { name = "touchpage"
-                            , address = mod.wsUrl
-                            , protocol = "rust-websocket"
-                            }
-                    , commandToCmd cmd
-                    ]
+                , Cmd.none
+                  -- , Cmd.batch
+                  --     [ -- wssend <|
+                  --       --     WebSocket.Connect
+                  --       --         { name = "touchpage"
+                  --       --         , address = mod.wsUrl
+                  --       --         , protocol = "rust-websocket"
+                  --       --         }
+                  --       commandToCmd cmd
+                  --     ]
                 )
         , subscriptions =
             \_ ->
                 Sub.batch
-                    [ Sub.map ScpMsg <|
-                        BE.onResize
-                            (\a b ->
-                                SvgControlPage.Resize <|
-                                    RectSize (toFloat a) (toFloat b)
-                            )
-                    , wsreceive
-                    , receiveTextMetrics (TextSize << JD.decodeValue decodeTextSizeReply)
+                    [ -- Sub.map ScpMsg <|
+                      --     BE.onResize
+                      --         (\a b ->
+                      --             SvgControlPage.Resize <|
+                      --                 RectSize (toFloat a) (toFloat b)
+                      --         )
+                      -- , wsreceive
+                      receiveTextMetrics (TextSize << JD.decodeValue decodeTextSizeReply)
                     ]
         , update =
             \msg mod ->
-                case msg of
-                    ScpMsg sm ->
+                case ( msg, mod.state ) of
+                    ( LeMsg sm, LayoutEdit lemodel ) ->
                         let
                             ( umod, cmd ) =
-                                SvgControlPage.update sm mod.scpModel
+                                LayoutEdit.update
+                                    sm
+                                    lemodel
                         in
-                        ( { mod | scpModel = umod }
-                        , commandToCmd cmd
+                        ( { mod | state = LayoutEdit umod }
+                        , Cmd.none
                         )
 
-                    WsMsg x ->
-                        case x of
-                            Ok (WebSocket.Data wsd) ->
-                                let
-                                    ( scpModel, scpCommand ) =
-                                        SvgControlPage.update (SvgControlPage.JsonMsg wsd.data) mod.scpModel
-                                in
-                                ( { mod | scpModel = scpModel }, commandToCmd scpCommand )
+                    _ ->
+                        ( mod, Cmd.none )
 
-                            Ok (WebSocket.Error wse) ->
-                                ( mod, Cmd.none )
-
-                            Err _ ->
-                                ( mod, Cmd.none )
-
-                    TextSize ts ->
-                        case ts of
-                            Ok tsr ->
-                                ( { mod | scpModel = SvgControlPage.onTextSize tsr mod.scpModel }
-                                , Cmd.none
-                                )
-
-                            Err _ ->
-                                ( mod, Cmd.none )
+        -- TextSize ts ->
+        --     case ts of
+        --         Ok tsr ->
+        --             ( { mod | scpModel = LayoutEdit.onTextSize tsr mod.scpModel }
+        --             , Cmd.none
+        --             )
+        --         Err _ ->
+        --             ( mod, Cmd.none )
         , view =
             \model ->
-                Browser.Document "svg control"
-                    [ Html.map ScpMsg <| SvgControlPage.view model.scpModel ]
+                case model.state of
+                    LayoutEdit lm ->
+                        Browser.Document "svg control edit"
+                            [ E.layout [] (E.map LeMsg <| LayoutEdit.view model.size lm) ]
         }
 
 
 init : Flags -> ( Model, Command )
 init flags =
     let
-        wsUrl =
-            String.split ":" flags.location
-                |> List.tail
-                |> Maybe.andThen List.head
-                |> Maybe.map (\loc -> "ws:" ++ loc ++ ":" ++ String.fromInt flags.wsport)
-                |> Maybe.withDefault ""
-
         rmargin =
             4
 
@@ -169,7 +154,7 @@ init flags =
             SvgControlPage.init
                 (SvgThings.Rect 0 0 (flags.width - rmargin) (flags.height - rmargin))
                 (SvgControlPage.Spec
-                    wsUrl
+                    ""
                     (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
                     Nothing
                     Nothing
@@ -180,8 +165,8 @@ init flags =
                     Nothing
                 )
     in
-    ( { scpModel = sm
-      , wsUrl = wsUrl
+    ( { state = LayoutEdit { scpModel = sm }
+      , size = { width = toFloat flags.width, height = toFloat flags.height }
       }
     , cmd
     )

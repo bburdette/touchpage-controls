@@ -1,4 +1,18 @@
-module SvgControlPage exposing (ID, JsMessage(..), Model, Msg(..), Spec, init, jsMessage, jsSpec, onTextSize, resize, update, view, viewSvgControl)
+module SvgControlPage exposing
+    ( ID
+    , JsMessage(..)
+    , Model
+    , Msg(..)
+    , Spec
+    , init
+    , jsMessage
+    , jsSpec
+    , onTextSize
+    , resize
+    , update
+    , view
+    , viewSvgControl
+    )
 
 import Dict exposing (..)
 import Html
