@@ -1,4 +1,42 @@
-module SvgControl.SvgControl exposing (ID, Model(..), Msg(..), Spec(..), SzModel, SzMsg(..), SzSpec, border, controlId, controlName, findControl, firstJust, init, jsCs, jsSpec, jsSzSpec, jsUmType, jsUpdateMessage, mkRlist, myTail, onTextSize, processProps, resize, szFindControl, szOnTextSize, szinit, szresize, szupdate, szview, toCtrlMsg, tupMap2, update, update_list, view, viewSvgControls, zip)
+module SvgControl.SvgControl exposing
+    ( ID
+    , Model(..)
+    , Msg(..)
+    , Spec(..)
+    , SzModel
+    , SzMsg(..)
+    , SzSpec
+    , UpdateMessage
+    , border
+    , controlId
+    , controlName
+    , findControl
+    , firstJust
+    , init
+    , jsCs
+    , jsSpec
+    , jsSzSpec
+    , jsUmType
+    , jsUpdateMessage
+    , mkRlist
+    , myTail
+    , onTextSize
+    , processProps
+    , resize
+    , szFindControl
+    , szOnTextSize
+    , szinit
+    , szresize
+    , szupdate
+    , szview
+    , toCtrlMsg
+    , tupMap2
+    , update
+    , update_list
+    , view
+    , viewSvgControls
+    , zip
+    )
 
 import Dict exposing (..)
 import Html
@@ -7,7 +45,7 @@ import List exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import SvgControl.SvgButton as SvgButton
-import SvgControl.SvgCommand exposing (Command(..))
+import SvgControl.SvgCommand exposing (Command(..), cmdMap)
 import SvgControl.SvgLabel as SvgLabel
 import SvgControl.SvgSlider as SvgSlider
 import SvgControl.SvgTextSize exposing (TextSizeReply, calcTextSvg, onTextSizeReply)
@@ -48,6 +86,14 @@ type Msg
     | CaXY SvgXY.Msg
     | CaLabel SvgLabel.Msg
     | CaSizer SzMsg
+
+
+type UpdateMessage
+    = UmButton SvgButton.UpdateMessage
+    | UmSlider SvgSlider.UpdateMessage
+    | UmXY SvgXY.UpdateMessage
+    | UmLabel SvgLabel.UpdateMessage
+    | UmSizer UpdateMessage
 
 
 findControl : Int -> Int -> Model -> Maybe Model
@@ -124,27 +170,27 @@ tupMap2 fa ab =
     ( fa (Tuple.first ab), Tuple.second ab )
 
 
-resize : Model -> Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command UpdateMessage )
 resize model rect =
     let
         aptg =
-            \f ( m, c ) -> ( f m, c )
+            \f g ( m, c ) -> ( f m, g c )
     in
     case model of
         CmButton mod ->
-            aptg CmButton <| SvgButton.resize mod (shrinkRect border rect)
+            aptg CmButton (cmdMap UmButton) <| SvgButton.resize mod (shrinkRect border rect)
 
         CmSlider mod ->
-            aptg CmSlider <| SvgSlider.resize mod (shrinkRect border rect)
+            aptg CmSlider (cmdMap UmSlider) <| SvgSlider.resize mod (shrinkRect border rect)
 
         CmXY mod ->
-            aptg CmXY <| SvgXY.resize mod (shrinkRect border rect)
+            aptg CmXY (cmdMap UmXY) <| SvgXY.resize mod (shrinkRect border rect)
 
         CmLabel mod ->
-            aptg CmLabel <| SvgLabel.resize mod (shrinkRect border rect)
+            aptg CmLabel (cmdMap UmLabel) <| SvgLabel.resize mod (shrinkRect border rect)
 
         CmSizer mod ->
-            aptg CmSizer <| szresize mod rect
+            aptg CmSizer (cmdMap UmSizer) <| szresize mod rect
 
 
 jsSpec : JD.Decoder Spec
@@ -252,7 +298,7 @@ onTextSize theme tsr model =
             CmSizer <| szOnTextSize theme tsr m
 
 
-update : Msg -> Model -> ( Model, Command )
+update : Msg -> Model -> ( Model, Command UpdateMessage )
 update msg model =
     case ( msg, model ) of
         ( CaButton ms, CmButton m ) ->
@@ -260,35 +306,35 @@ update msg model =
                 ( a, b ) =
                     SvgButton.update ms m
             in
-            ( CmButton a, b )
+            ( CmButton a, cmdMap UmButton b )
 
         ( CaSlider ms, CmSlider m ) ->
             let
                 ( a, b ) =
                     SvgSlider.update ms m
             in
-            ( CmSlider a, b )
+            ( CmSlider a, cmdMap UmSlider b )
 
         ( CaXY ms, CmXY m ) ->
             let
                 ( a, b ) =
                     SvgXY.update ms m
             in
-            ( CmXY a, b )
+            ( CmXY a, cmdMap UmXY b )
 
         ( CaLabel ms, CmLabel m ) ->
             let
                 ( md, c ) =
                     SvgLabel.update ms m
             in
-            ( CmLabel md, c )
+            ( CmLabel md, cmdMap UmLabel c )
 
         ( CaSizer ms, CmSizer m ) ->
             let
                 ( a, b ) =
                     szupdate ms m
             in
-            ( CmSizer a, b )
+            ( CmSizer a, cmdMap UmSizer b )
 
         _ ->
             ( model, None )
@@ -298,7 +344,7 @@ update msg model =
 -- should probably produce an error.  to the user??
 
 
-update_list : List Msg -> Model -> ( Model, List Command )
+update_list : List Msg -> Model -> ( Model, List (Command UpdateMessage) )
 update_list msgs model =
     List.foldl
         (\msg ( mod, cmds ) ->
@@ -316,27 +362,27 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command )
+    -> ( Model, Command UpdateMessage )
 init rect cid spec =
     let
         aptg =
-            \f ( m, c ) -> ( f m, c )
+            \f g ( m, c ) -> ( f m, g c )
     in
     case spec of
         CsButton s ->
-            aptg CmButton <| SvgButton.init (shrinkRect border rect) cid s
+            aptg CmButton (cmdMap UmButton) <| SvgButton.init (shrinkRect border rect) cid s
 
         CsSlider s ->
-            aptg CmSlider <| SvgSlider.init (shrinkRect border rect) cid s
+            aptg CmSlider (cmdMap UmSlider) <| SvgSlider.init (shrinkRect border rect) cid s
 
         CsXY s ->
-            aptg CmXY <| SvgXY.init (shrinkRect border rect) cid s
+            aptg CmXY (cmdMap UmXY) <| SvgXY.init (shrinkRect border rect) cid s
 
         CsLabel s ->
-            aptg CmLabel <| SvgLabel.init (shrinkRect border rect) cid s
+            aptg CmLabel (cmdMap UmLabel) <| SvgLabel.init (shrinkRect border rect) cid s
 
         CsSizer s ->
-            aptg CmSizer <| szinit rect cid s
+            aptg CmSizer (cmdMap UmSizer) <| szinit rect cid s
 
 
 view : UiTheme -> Model -> Svg Msg
@@ -444,7 +490,7 @@ zip =
     List.map2 Tuple.pair
 
 
-szupdate : SzMsg -> SzModel -> ( SzModel, Command )
+szupdate : SzMsg -> SzModel -> ( SzModel, Command UpdateMessage )
 szupdate msg model =
     case msg of
         SzCMsg id act ->
@@ -489,7 +535,7 @@ szOnTextSize theme tsr model =
             model
 
 
-szresize : SzModel -> Rect -> ( SzModel, Command )
+szresize : SzModel -> Rect -> ( SzModel, Command UpdateMessage )
 szresize model rect =
     let
         clist =
@@ -540,7 +586,7 @@ szinit :
     Rect
     -> ControlId
     -> SzSpec
-    -> ( SzModel, Command )
+    -> ( SzModel, Command UpdateMessage )
 szinit rect cid szspec =
     let
         rlist =

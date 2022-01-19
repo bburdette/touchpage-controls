@@ -62,7 +62,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command )
+    -> ( Model, Command UpdateMessage )
 init rect cid spec =
     let
         model =
@@ -81,7 +81,7 @@ init rect cid spec =
     ( model, resizeCommand model )
 
 
-update : Msg -> Model -> ( Model, Command )
+update : Msg -> Model -> ( Model, Command UpdateMessage )
 update msg model =
     case msg of
         SvgUpdate um ->
@@ -95,7 +95,7 @@ update msg model =
             ( model, None )
 
 
-resize : Model -> Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command UpdateMessage )
 resize model rect =
     let
         -- ts = calcTextSvgM theme model

@@ -144,7 +144,7 @@ main =
         }
 
 
-init : Flags -> ( Model, Command )
+init : Flags -> ( Model, Command SvgControl.UpdateMessage )
 init flags =
     let
         rmargin =

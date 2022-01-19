@@ -99,7 +99,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command )
+    -> ( Model, Command UpdateMessage )
 init rect cid spec =
     let
         model =
@@ -259,7 +259,7 @@ getLocation model v =
             )
 
 
-update : Msg -> Model -> ( Model, Command )
+update : Msg -> Model -> ( Model, Command UpdateMessage )
 update msg model =
     case msg of
         SvgPress v ->
@@ -364,7 +364,7 @@ update msg model =
                         updsend model Nothing loc
 
 
-updsend : Model -> Maybe UpdateType -> ( Float, Float ) -> ( Model, Command )
+updsend : Model -> Maybe UpdateType -> ( Float, Float ) -> ( Model, Command UpdateMessage )
 updsend model mbut ( x, y ) =
     let
         lim =
@@ -389,19 +389,19 @@ updsend model mbut ( x, y ) =
         ( model, None )
 
     else
-        let
-            um =
-                JE.encode 0
-                    (encodeUpdateMessage
-                        (UpdateMessage model.cid mbut (Just limloc) Nothing)
-                    )
-        in
+        -- let
+        --     um =
+        --         JE.encode 0
+        --             (encodeUpdateMessage
+        --                 (UpdateMessage model.cid mbut (Just limloc) Nothing)
+        --             )
+        -- in
         ( { model | location = limloc, pressed = prest }
-        , Send um
+        , Send (UpdateMessage model.cid mbut (Just limloc) Nothing)
         )
 
 
-resize : Model -> Rect -> ( Model, Command )
+resize : Model -> Rect -> ( Model, Command UpdateMessage )
 resize model rect =
     let
         newmodel =

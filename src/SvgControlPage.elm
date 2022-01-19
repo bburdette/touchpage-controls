@@ -102,7 +102,7 @@ jsMessage =
         ]
 
 
-update : Msg -> Model -> ( Model, Command )
+update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
 update msg model =
     case msg of
         JsonMsg s ->
@@ -133,7 +133,7 @@ update msg model =
             ( model, None )
 
 
-resize : RectSize -> Model -> ( Model, Command )
+resize : RectSize -> Model -> ( Model, Command SvgControl.UpdateMessage )
 resize newSize model =
     let
         nr =
@@ -160,7 +160,7 @@ onTextSize tsr model =
 init :
     Rect
     -> Spec
-    -> ( Model, Command )
+    -> ( Model, Command SvgControl.UpdateMessage )
 init rect spec =
     let
         ( conmod, cmd ) =
