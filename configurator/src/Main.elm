@@ -164,9 +164,12 @@ init flags =
                     Nothing
                     Nothing
                 )
+
+        size =
+            { width = toFloat flags.width, height = toFloat flags.height }
     in
-    ( { state = LayoutEdit { scpModel = sm }
-      , size = { width = toFloat flags.width, height = toFloat flags.height }
+    ( { state = LayoutEdit { scpModel = sm, size = size }
+      , size = size
       }
     , cmd
     )

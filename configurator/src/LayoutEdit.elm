@@ -1,4 +1,4 @@
-module LayoutEdit exposing (Command(..), Model, Msg(..), buttonStyle, update, view)
+module LayoutEdit exposing (Model, Msg(..), buttonStyle, update, view)
 
 -- import Dialog as D
 -- import TangoColors as TC
@@ -11,6 +11,13 @@ import Element.Font as EF
 import Element.Input as EI
 import Element.Region
 import FlatColors.BritishPalette as Color
+import SvgControl.SvgButton as SvgButton
+import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
+import SvgControl.SvgControl as SvgControl
+import SvgControl.SvgLabel as SvgLabel
+import SvgControl.SvgSlider as SvgSlider
+import SvgControl.SvgThings as SvgThings
+import SvgControl.SvgXY as SvgXY
 import SvgControl.Util as Util
 import SvgControlPage
 import Toop
@@ -37,16 +44,14 @@ type Msg
     | AddHSizerPress
     | AddVSizerPress
     | AddXYPress
+    | AddLabelPress
     | ScpMsg SvgControlPage.Msg
 
 
 type alias Model =
     { scpModel : SvgControlPage.Model
+    , size : Util.RectSize
     }
-
-
-type Command
-    = None
 
 
 
@@ -94,22 +99,71 @@ view size model =
                 { onPress = Just AddXYPress
                 , label = E.text "AddXY"
                 }
+            , EI.button buttonStyle
+                { onPress = Just AddLabelPress
+                , label = E.text "AddLabel"
+                }
             ]
         , E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
 
 
-update : Msg -> Model -> ( Model, Command )
+initScp : SvgThings.Rect -> SvgControl.Spec -> ( SvgControlPage.Model, Command SvgControl.UpdateMessage )
+initScp size spec =
+    SvgControlPage.init
+        size
+        (SvgControlPage.Spec
+            ""
+            spec
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+        )
+
+
+update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
 update msg model =
     case msg of
         AddHSizerPress ->
-            ( model, None )
+            let
+                ( m, c ) =
+                    initScp
+                        { w = round model.size.width
+                        , h = round model.size.height
+                        , x = 0
+                        , y = 0
+                        }
+                        (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
+            in
+            ( { model
+                | scpModel = m
+              }
+            , c
+            )
 
         AddVSizerPress ->
             ( model, None )
 
         AddButtonPress ->
-            ( model, None )
+            let
+                ( m, c ) =
+                    initScp
+                        { w = round model.size.width
+                        , h = round model.size.height
+                        , x = 0
+                        , y = 0
+                        }
+                        (SvgControl.CsButton (SvgButton.Spec "test" (Just "test button")))
+            in
+            ( { model
+                | scpModel = m
+              }
+            , c
+            )
 
         AddHSliderPress ->
             ( model, None )
@@ -119,6 +173,23 @@ update msg model =
 
         AddXYPress ->
             ( model, None )
+
+        AddLabelPress ->
+            let
+                ( m, c ) =
+                    initScp
+                        { w = round model.size.width
+                        , h = round model.size.height
+                        , x = 0
+                        , y = 0
+                        }
+                        (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
+            in
+            ( { model
+                | scpModel = m
+              }
+            , c
+            )
 
         ScpMsg scpmsg ->
             ( model, None )
