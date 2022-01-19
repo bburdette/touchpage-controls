@@ -74,7 +74,7 @@ view size model =
             85
     in
     E.row [ E.width E.fill ]
-        [ E.column [ E.spacing 8, E.width E.fill ]
+        [ E.column [ E.spacing 8 ]
             [ EI.button buttonStyle
                 { onPress = Just AddHSizerPress
                 , label = E.text "AddHSizer"
@@ -104,7 +104,7 @@ view size model =
                 , label = E.text "AddLabel"
                 }
             ]
-        , E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
+        , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
 
 

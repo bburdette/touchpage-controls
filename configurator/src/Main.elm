@@ -152,7 +152,8 @@ init flags =
 
         ( sm, cmd ) =
             SvgControlPage.init
-                (SvgThings.Rect 0 0 (flags.width - rmargin) (flags.height - rmargin))
+                -- (SvgThings.Rect 0 0 (flags.width - rmargin) (flags.height - rmargin))
+                (SvgThings.Rect 0 0 500 500)
                 (SvgControlPage.Spec
                     ""
                     (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
@@ -166,7 +167,9 @@ init flags =
                 )
 
         size =
-            { width = toFloat flags.width, height = toFloat flags.height }
+            { width = 500, height = 500 }
+
+        -- { width = toFloat flags.width, height = toFloat flags.height }
     in
     ( { state = LayoutEdit { scpModel = sm, size = size }
       , size = size
