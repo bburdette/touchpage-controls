@@ -54,6 +54,51 @@ type alias Model =
     }
 
 
+controlTree : SvgControlPage.Spec -> Element Msg
+controlTree svgmod =
+    let
+        l =
+            controlTreeH 0 svgmod.rootControl
+    in
+    E.column [] l
+
+
+controlTreeH : Int -> SvgControl.Spec -> List (Element Msg)
+controlTreeH indent spec =
+    let
+        rowattribs =
+            [ E.spacing 10
+            , E.paddingEach
+                { top = 0
+                , right = 0
+                , bottom = 0
+                , left = indent * 100
+                }
+            ]
+    in
+    case spec of
+        SvgControl.CsButton cspec ->
+            [ E.row rowattribs [ E.text "CsButton", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+
+        SvgControl.CsSlider cspec ->
+            [ E.row rowattribs [ E.text "CsSlider", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+
+        SvgControl.CsXY cspec ->
+            [ E.row rowattribs [ E.text "CsXY", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+
+        SvgControl.CsLabel cspec ->
+            [ E.row rowattribs [ E.text "CsLabel", E.text cspec.name, E.text cspec.label ] ]
+
+        SvgControl.CsSizer cspec ->
+            let
+                moar =
+                    cspec.controls
+                        |> List.map (controlTreeH (indent + 1))
+                        |> List.concat
+            in
+            E.row rowattribs [ E.text "CsSizer" ] :: moar
+
+
 
 -- onWkKeyPress : WK.Key -> Model -> ( Model, Command )
 -- onWkKeyPress key model =
@@ -104,6 +149,7 @@ view size model =
                 , label = E.text "AddLabel"
                 }
             ]
+        , controlTree model.scpModel.spec
         , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
 

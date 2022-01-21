@@ -436,6 +436,19 @@ type alias SzSpec =
     }
 
 
+type alias SzModel =
+    { cid : ControlId
+    , rect : Rect
+    , controls : Dict ID Model
+    , orientation : Orientation
+    , proportions : Maybe (List Float)
+    }
+
+
+type alias ID =
+    Int
+
+
 
 -- proportions should all add up to 1.0
 
@@ -458,19 +471,6 @@ jsSzSpec =
                 (\x -> JD.succeed (Maybe.map processProps x))
         )
         (JD.field "controls" (JD.list (JD.lazy (\_ -> jsSpec))))
-
-
-type alias SzModel =
-    { cid : ControlId
-    , rect : Rect
-    , controls : Dict ID Model
-    , orientation : Orientation
-    , proportions : Maybe (List Float)
-    }
-
-
-type alias ID =
-    Int
 
 
 szFindControl : SzModel -> Int -> Int -> Maybe Model
