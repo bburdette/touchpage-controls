@@ -4,6 +4,7 @@ module LayoutEdit exposing (Model, Msg(..), buttonStyle, update, view)
 -- import TangoColors as TC
 -- exposing (SvgControlPage)
 
+import Dict
 import Element as E exposing (Element)
 import Element.Background as EBk
 import Element.Border as EBd
@@ -54,16 +55,16 @@ type alias Model =
     }
 
 
-controlTree : SvgControlPage.Spec -> Element Msg
+controlTree : SvgControlPage.Model -> Element Msg
 controlTree svgmod =
     let
         l =
-            controlTreeH 0 svgmod.rootControl
+            controlTreeH 0 svgmod.control
     in
     E.column [] l
 
 
-controlTreeH : Int -> SvgControl.Spec -> List (Element Msg)
+controlTreeH : Int -> SvgControl.Model -> List (Element Msg)
 controlTreeH indent spec =
     let
         rowattribs =
@@ -77,26 +78,27 @@ controlTreeH indent spec =
             ]
     in
     case spec of
-        SvgControl.CsButton cspec ->
-            [ E.row rowattribs [ E.text "CsButton", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+        SvgControl.CmButton cspec ->
+            [ E.row rowattribs [ E.text "Button", E.text cspec.name, E.text cspec.label ] ]
 
-        SvgControl.CsSlider cspec ->
-            [ E.row rowattribs [ E.text "CsSlider", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+        SvgControl.CmSlider cspec ->
+            [ E.row rowattribs [ E.text "Slider", E.text cspec.name, E.text cspec.label ] ]
 
-        SvgControl.CsXY cspec ->
-            [ E.row rowattribs [ E.text "CsXY", E.text cspec.name, E.text (cspec.label |> Maybe.withDefault "") ] ]
+        SvgControl.CmXY cspec ->
+            [ E.row rowattribs [ E.text "XY", E.text cspec.name, E.text cspec.label ] ]
 
-        SvgControl.CsLabel cspec ->
-            [ E.row rowattribs [ E.text "CsLabel", E.text cspec.name, E.text cspec.label ] ]
+        SvgControl.CmLabel cspec ->
+            [ E.row rowattribs [ E.text "Label", E.text cspec.name, E.text cspec.label ] ]
 
-        SvgControl.CsSizer cspec ->
+        SvgControl.CmSizer cspec ->
             let
                 moar =
                     cspec.controls
+                        |> Dict.values
                         |> List.map (controlTreeH (indent + 1))
                         |> List.concat
             in
-            E.row rowattribs [ E.text "CsSizer" ] :: moar
+            E.row rowattribs [ E.text "Sizer" ] :: moar
 
 
 
@@ -149,7 +151,7 @@ view size model =
                 , label = E.text "AddLabel"
                 }
             ]
-        , controlTree model.scpModel.spec
+        , controlTree model.scpModel
         , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
 
