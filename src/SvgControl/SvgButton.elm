@@ -1,4 +1,4 @@
-module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, update, view)
+module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, update, view, toSpec)
 
 import Dict
 import Html exposing (Html)
@@ -64,6 +64,19 @@ init rect cid spec =
                 False
     in
     ( model, resizeCommand model )
+
+
+toSpec : Model -> Spec
+toSpec model =
+    { name = model.name
+    , label =
+        case model.label of
+            "" ->
+                Nothing
+
+            _ ->
+                Just model.label
+    }
 
 
 pressedColor : Bool -> String

@@ -1,4 +1,4 @@
-module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, encodeUpdateMessage, init, jsSpec, jsUpdateMessage, resize, update, view)
+module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, encodeUpdateMessage, init, jsSpec, jsUpdateMessage, resize, toSpec, update, view)
 
 import Html exposing (Html)
 import Html.Events exposing (onClick, onMouseDown, onMouseOut, onMouseUp)
@@ -88,6 +88,13 @@ init rect cid spec =
                 []
     in
     ( model, resizeCommand model )
+
+
+toSpec : Model -> Spec
+toSpec model =
+    { name = model.name
+    , label = model.label
+    }
 
 
 update : Msg -> Model -> ( Model, Command UpdateMessage )

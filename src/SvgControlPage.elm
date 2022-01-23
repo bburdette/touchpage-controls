@@ -69,7 +69,6 @@ type alias Model =
     { title : String
     , mahrect : Rect
     , srect : SRect
-    , spec : Spec
     , control : SvgControl.Model
     , windowSize : RectSize
     , uiTheme : UiTheme
@@ -181,7 +180,6 @@ init rect spec =
     ( Model spec.title
         rect
         (toSRect rect)
-        spec
         updmod
         (RectSize 0 0)
         { colorString = colors }

@@ -8,6 +8,7 @@ import Dict
 import Element as E exposing (Element)
 import Element.Background as EBk
 import Element.Border as EBd
+import Element.Events as EE
 import Element.Font as EF
 import Element.Input as EI
 import Element.Region
@@ -17,7 +18,7 @@ import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
 import SvgControl.SvgControl as SvgControl
 import SvgControl.SvgLabel as SvgLabel
 import SvgControl.SvgSlider as SvgSlider
-import SvgControl.SvgThings as SvgThings
+import SvgControl.SvgThings as SvgThings exposing (ControlId)
 import SvgControl.SvgXY as SvgXY
 import SvgControl.Util as Util
 import SvgControlPage
@@ -46,28 +47,30 @@ type Msg
     | AddVSizerPress
     | AddXYPress
     | AddLabelPress
+    | TreeRowClicked ControlId
     | ScpMsg SvgControlPage.Msg
 
 
 type alias Model =
     { scpModel : SvgControlPage.Model
     , size : Util.RectSize
+    , selected : Maybe ControlId
     }
 
 
-controlTree : SvgControlPage.Model -> Element Msg
-controlTree svgmod =
+controlTree : Maybe ControlId -> SvgControlPage.Model -> Element Msg
+controlTree mbselected svgmod =
     let
         l =
-            controlTreeH 0 svgmod.control
+            controlTreeH 0 mbselected svgmod.control
     in
     E.column [] l
 
 
-controlTreeH : Int -> SvgControl.Model -> List (Element Msg)
-controlTreeH indent spec =
+controlTreeH : Int -> Maybe ControlId -> SvgControl.Model -> List (Element Msg)
+controlTreeH indent mbselected spec =
     let
-        rowattribs =
+        rowattribs controlid =
             [ E.spacing 10
             , E.paddingEach
                 { top = 0
@@ -75,30 +78,37 @@ controlTreeH indent spec =
                 , bottom = 0
                 , left = indent * 100
                 }
+            , EE.onClick (TreeRowClicked controlid)
             ]
+                ++ (if Just controlid == mbselected then
+                        [ EBk.color Color.blueNights ]
+
+                    else
+                        []
+                   )
     in
     case spec of
-        SvgControl.CmButton cspec ->
-            [ E.row rowattribs [ E.text "Button", E.text cspec.name, E.text cspec.label ] ]
+        SvgControl.CmButton cmod ->
+            [ E.row (rowattribs cmod.cid) [ E.text "Button", E.text cmod.name, E.text cmod.label ] ]
 
-        SvgControl.CmSlider cspec ->
-            [ E.row rowattribs [ E.text "Slider", E.text cspec.name, E.text cspec.label ] ]
+        SvgControl.CmSlider cmod ->
+            [ E.row (rowattribs cmod.cid) [ E.text "Slider", E.text cmod.name, E.text cmod.label ] ]
 
-        SvgControl.CmXY cspec ->
-            [ E.row rowattribs [ E.text "XY", E.text cspec.name, E.text cspec.label ] ]
+        SvgControl.CmXY cmod ->
+            [ E.row (rowattribs cmod.cid) [ E.text "XY", E.text cmod.name, E.text cmod.label ] ]
 
-        SvgControl.CmLabel cspec ->
-            [ E.row rowattribs [ E.text "Label", E.text cspec.name, E.text cspec.label ] ]
+        SvgControl.CmLabel cmod ->
+            [ E.row (rowattribs cmod.cid) [ E.text "Label", E.text cmod.name, E.text cmod.label ] ]
 
-        SvgControl.CmSizer cspec ->
+        SvgControl.CmSizer cmod ->
             let
                 moar =
-                    cspec.controls
+                    cmod.controls
                         |> Dict.values
-                        |> List.map (controlTreeH (indent + 1))
+                        |> List.map (controlTreeH (indent + 1) mbselected)
                         |> List.concat
             in
-            E.row rowattribs [ E.text "Sizer" ] :: moar
+            E.row (rowattribs cmod.cid) [ E.text "Sizer" ] :: moar
 
 
 
@@ -120,38 +130,38 @@ view size model =
         titlemaxconst =
             85
     in
-    E.row [ E.width E.fill ]
+    E.row [ E.width E.fill, E.spacing 8 ]
         [ E.column [ E.spacing 8 ]
             [ EI.button buttonStyle
                 { onPress = Just AddHSizerPress
-                , label = E.text "AddHSizer"
+                , label = E.text "Add HSizer"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddVSizerPress
-                , label = E.text "AddVSizer"
+                , label = E.text "Add VSizer"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddButtonPress
-                , label = E.text "AddButton"
+                , label = E.text "Add Button"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddHSliderPress
-                , label = E.text "AddHSlider"
+                , label = E.text "Add HSlider"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddVSliderPress
-                , label = E.text "AddVSlider"
+                , label = E.text "Add VSlider"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddXYPress
-                , label = E.text "AddXY"
+                , label = E.text "Add XY"
                 }
             , EI.button buttonStyle
                 { onPress = Just AddLabelPress
-                , label = E.text "AddLabel"
+                , label = E.text "Add Label"
                 }
             ]
-        , controlTree model.scpModel
+        , controlTree model.selected model.scpModel
         , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
 
@@ -175,69 +185,79 @@ initScp size spec =
 
 update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
 update msg model =
+    let
+        addcontrol =
+            \spec ->
+                case model.selected of
+                    Just cid ->
+                        let
+                            ( nc, c ) =
+                                SvgControl.addControl cid
+                                    spec
+                                    model.scpModel.control
+
+                            sm =
+                                model.scpModel
+                        in
+                        ( { model
+                            | scpModel = { sm | control = nc }
+                          }
+                        , c
+                        )
+
+                    Nothing ->
+                        ( model, None )
+    in
     case msg of
-        AddHSizerPress ->
-            let
-                ( m, c ) =
-                    initScp
-                        { w = round model.size.width
-                        , h = round model.size.height
-                        , x = 0
-                        , y = 0
-                        }
-                        (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
-            in
+        TreeRowClicked controlid ->
             ( { model
-                | scpModel = m
+                | selected =
+                    if model.selected == Just controlid then
+                        Nothing
+
+                    else
+                        Just controlid
               }
-            , c
+            , None
             )
+
+        AddHSizerPress ->
+            addcontrol
+                (SvgControl.CsSizer
+                    { orientation = SvgThings.Horizontal
+                    , proportions = Nothing
+                    , controls = []
+                    }
+                )
 
         AddVSizerPress ->
-            ( model, None )
+            addcontrol
+                (SvgControl.CsSizer
+                    { orientation = SvgThings.Vertical
+                    , proportions = Nothing
+                    , controls = []
+                    }
+                )
 
         AddButtonPress ->
-            let
-                ( m, c ) =
-                    initScp
-                        { w = round model.size.width
-                        , h = round model.size.height
-                        , x = 0
-                        , y = 0
-                        }
-                        (SvgControl.CsButton (SvgButton.Spec "test" (Just "test button")))
-            in
-            ( { model
-                | scpModel = m
-              }
-            , c
-            )
+            addcontrol
+                (SvgControl.CsButton (SvgButton.Spec "test" (Just "test button")))
 
         AddHSliderPress ->
-            ( model, None )
+            addcontrol
+                (SvgControl.CsSlider (SvgSlider.Spec "" Nothing SvgThings.Horizontal))
 
         AddVSliderPress ->
-            ( model, None )
+            addcontrol
+                (SvgControl.CsSlider (SvgSlider.Spec "" Nothing SvgThings.Vertical))
 
         AddXYPress ->
-            ( model, None )
+            addcontrol
+                (SvgControl.CsXY (SvgXY.Spec "test" (Just "test button")))
 
         AddLabelPress ->
-            let
-                ( m, c ) =
-                    initScp
-                        { w = round model.size.width
-                        , h = round model.size.height
-                        , x = 0
-                        , y = 0
-                        }
-                        (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
-            in
-            ( { model
-                | scpModel = m
-              }
-            , c
-            )
+            addcontrol
+                (SvgControl.CsLabel (SvgLabel.Spec "name" "label"))
 
         ScpMsg scpmsg ->
             ( model, None )

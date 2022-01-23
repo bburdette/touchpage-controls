@@ -7,6 +7,7 @@ module SvgControl.SvgControl exposing
     , SzMsg(..)
     , SzSpec
     , UpdateMessage
+    , addControl
     , border
     , controlId
     , controlName
@@ -57,7 +58,7 @@ import VirtualDom as VD
 
 
 ----------------------------------------------------------
--- Both control container and sizer ard in this file.
+-- Both control container and sizer are in this file.
 -- Normally I'd break them out into separate files, but
 -- they are mutually recursive so they have to
 -- both be in a single file.
@@ -94,6 +95,73 @@ type UpdateMessage
     | UmXY SvgXY.UpdateMessage
     | UmLabel SvgLabel.UpdateMessage
     | UmSizer UpdateMessage
+
+
+toSpec : Model -> Spec
+toSpec model =
+    case model of
+        CmButton m ->
+            CsButton <| SvgButton.toSpec m
+
+        CmSlider m ->
+            CsSlider <| SvgSlider.toSpec m
+
+        CmXY m ->
+            CsXY <| SvgXY.toSpec m
+
+        CmLabel m ->
+            CsLabel <| SvgLabel.toSpec m
+
+        CmSizer m ->
+            CsSizer <| szToSpec m
+
+
+replaceControl : ControlId -> Spec -> Rect -> ( Model, Command UpdateMessage )
+replaceControl controlid newspec rect =
+    init rect controlid newspec
+
+
+envelopControl : ControlId -> SzSpec -> Rect -> Spec -> ( Model, Command UpdateMessage )
+envelopControl controlid newspec r s =
+    init r controlid (CsSizer { newspec | controls = [ s ] })
+
+
+addControl : ControlId -> Spec -> Model -> ( Model, Command UpdateMessage )
+addControl controlid newspec cm =
+    case ( cm, newspec ) of
+        ( CmButton mod, CsSizer z ) ->
+            envelopControl controlid z mod.rect (toSpec cm)
+
+        ( CmSlider mod, CsSizer z ) ->
+            envelopControl controlid z mod.rect (toSpec cm)
+
+        ( CmXY mod, CsSizer z ) ->
+            envelopControl controlid z mod.rect (toSpec cm)
+
+        ( CmLabel mod, CsSizer z ) ->
+            envelopControl controlid z mod.rect (toSpec cm)
+
+        ( CmSizer mod, CsSizer z ) ->
+            envelopControl controlid z mod.rect (toSpec cm)
+
+        ( CmButton mod, c ) ->
+            replaceControl controlid c mod.rect
+
+        ( CmSlider mod, c ) ->
+            replaceControl controlid c mod.rect
+
+        ( CmXY mod, c ) ->
+            replaceControl controlid c mod.rect
+
+        ( CmLabel mod, c ) ->
+            replaceControl controlid c mod.rect
+
+        ( CmSizer mod, c ) ->
+            let
+                sspec =
+                    szToSpec mod
+            in
+            replaceControl controlid (CsSizer { sspec | controls = sspec.controls ++ [ c ] }) mod.rect
 
 
 encodeUpdateMessage : UpdateMessage -> JD.Value
@@ -447,6 +515,14 @@ type alias SzModel =
 
 type alias ID =
     Int
+
+
+szToSpec : SzModel -> SzSpec
+szToSpec model =
+    { orientation = model.orientation
+    , proportions = model.proportions
+    , controls = model.controls |> Dict.values |> List.map toSpec
+    }
 
 
 

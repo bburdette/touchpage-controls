@@ -1,4 +1,4 @@
-module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, update, updsend, view)
+module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, update, updsend, view, toSpec)
 
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 
@@ -43,6 +43,20 @@ type alias Model =
     , location : Float
     , textSvg : List (Svg ())
     , touchonly : Bool
+    }
+
+
+toSpec : Model -> Spec
+toSpec model =
+    { name = model.name
+    , label =
+        case model.label of
+            "" ->
+                Nothing
+
+            _ ->
+                Just model.label
+    , orientation = model.orientation
     }
 
 

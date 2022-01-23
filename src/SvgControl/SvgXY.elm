@@ -26,6 +26,7 @@ module SvgControl.SvgXY exposing
     , pressedColor
     , resize
     , sliderEvt
+    , toSpec
     , update
     , updsend
     , view
@@ -119,6 +120,19 @@ init rect cid spec =
                 False
     in
     ( model, resizeCommand model )
+
+
+toSpec : Model -> Spec
+toSpec model =
+    { name = model.name
+    , label =
+        case model.label of
+            "" ->
+                Nothing
+
+            _ ->
+                Just model.label
+    }
 
 
 pressedColor : Bool -> String

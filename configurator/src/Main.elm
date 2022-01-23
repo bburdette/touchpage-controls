@@ -156,7 +156,7 @@ init flags =
                 (SvgThings.Rect 0 0 500 500)
                 (SvgControlPage.Spec
                     ""
-                    (SvgControl.CsLabel (SvgLabel.Spec "empty" "no controls loaded!"))
+                    (SvgControl.CsLabel (SvgLabel.Spec "empty" "except for this label!"))
                     Nothing
                     Nothing
                     Nothing
@@ -171,7 +171,7 @@ init flags =
 
         -- { width = toFloat flags.width, height = toFloat flags.height }
     in
-    ( { state = LayoutEdit { scpModel = sm, size = size }
+    ( { state = LayoutEdit { scpModel = sm, size = size, selected = Nothing }
       , size = size
       }
     , cmd
