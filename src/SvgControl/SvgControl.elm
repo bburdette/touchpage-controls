@@ -20,6 +20,7 @@ module SvgControl.SvgControl exposing
     , jsUmType
     , jsUpdateMessage
     , mkRlist
+    , modControl
     , myTail
     , onTextSize
     , processProps
@@ -164,6 +165,68 @@ addControl controlid newspec cm =
             replaceControl controlid (CsSizer { sspec | controls = sspec.controls ++ [ c ] }) mod.rect
 
 
+modControl : ControlId -> (Model -> ( Model, Command UpdateMessage )) -> Model -> ( Model, Command UpdateMessage )
+modControl cid f model =
+    case model of
+        CmButton m ->
+            if m.cid == cid then
+                f model
+
+            else
+                ( model, None )
+
+        CmSlider m ->
+            if m.cid == cid then
+                f model
+
+            else
+                ( model, None )
+
+        CmXY m ->
+            if m.cid == cid then
+                f model
+
+            else
+                ( model, None )
+
+        CmLabel m ->
+            if m.cid == cid then
+                f model
+
+            else
+                ( model, None )
+
+        CmSizer m ->
+            if m.cid == cid then
+                f model
+
+            else if m.cid == take (List.length m.cid) cid then
+                let
+                    ( ncontrols, ncmds ) =
+                        Dict.foldl
+                            (\k v ( d, cmds ) ->
+                                let
+                                    ( nc, ncmd ) =
+                                        modControl cid f v
+                                in
+                                ( Dict.insert k nc d
+                                , ncmd :: cmds
+                                )
+                            )
+                            ( m.controls, [] )
+                            m.controls
+                in
+                ( CmSizer
+                    { m
+                        | controls = ncontrols
+                    }
+                , Batch (List.filter ((/=) None) ncmds)
+                )
+
+            else
+                ( model, None )
+
+
 encodeUpdateMessage : UpdateMessage -> JD.Value
 encodeUpdateMessage um =
     case um of
@@ -207,7 +270,7 @@ findControl x y mod =
             else
                 Nothing
 
-        CmLabel smod ->
+        CmLabel _ ->
             Nothing
 
         CmSizer szmod ->

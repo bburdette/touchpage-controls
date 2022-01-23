@@ -192,8 +192,10 @@ update msg model =
                     Just cid ->
                         let
                             ( nc, c ) =
-                                SvgControl.addControl cid
-                                    spec
+                                SvgControl.modControl cid
+                                    (SvgControl.addControl cid
+                                        spec
+                                    )
                                     model.scpModel.control
 
                             sm =
