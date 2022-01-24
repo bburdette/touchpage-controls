@@ -147,12 +147,12 @@ pressedColor pressed =
 
 getX : JD.Decoder Int
 getX =
-    JD.field "pageX" JD.int
+    JD.field "offsetX" JD.int
 
 
 getY : JD.Decoder Int
 getY =
-    JD.field "pageY" JD.int
+    JD.field "offsetY" JD.int
 
 
 encodeUpdateMessage : UpdateMessage -> JD.Value

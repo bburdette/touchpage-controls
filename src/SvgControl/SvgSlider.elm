@@ -1,4 +1,4 @@
-module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, update, updsend, view, toSpec)
+module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, toSpec, update, updsend, view)
 
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 
@@ -112,12 +112,12 @@ init rect cid spec =
 
 getX : JD.Decoder Int
 getX =
-    JD.field "pageX" JD.int
+    JD.field "offsetX" JD.int
 
 
 getY : JD.Decoder Int
 getY =
-    JD.field "pageY" JD.int
+    JD.field "offsetY" JD.int
 
 
 encodeUpdateMessage : UpdateMessage -> JD.Value
