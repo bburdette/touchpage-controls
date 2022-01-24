@@ -56,25 +56,31 @@ type alias Model =
     }
 
 
+commandToCmd : SvgCommand.Command SvgControl.UpdateMessage -> Cmd Msg
+commandToCmd scmd =
+    let
+        _ =
+            Debug.log "commaandToCmd" scmd
+    in
+    case scmd of
+        Send dta ->
+            Cmd.none
 
--- commandToCmd : SvgCommand.Command -> Cmd Msg
--- commandToCmd scmd =
---     case scmd of
---         Send dta ->
---             Cmd.none
---         -- wssend <|
---         --     WebSocket.Send
---         --         { name = "touchpage"
---         --         , content = dta
---         --         }
---         RequestTextWidth rtw ->
---             requestTextSize <|
---                 encodeTextSizeRequest <|
---                     rtw
---         None ->
---             Cmd.none
---         Batch cmds ->
---             Cmd.batch (List.map commandToCmd cmds)
+        -- wssend <|
+        --     WebSocket.Send
+        --         { name = "touchpage"
+        --         , content = dta
+        --         }
+        RequestTextWidth rtw ->
+            requestTextSize <|
+                encodeTextSizeRequest <|
+                    rtw
+
+        None ->
+            Cmd.none
+
+        Batch cmds ->
+            Cmd.batch (List.map commandToCmd cmds)
 
 
 main : Program Flags Model Msg
@@ -87,7 +93,8 @@ main =
                         init flags
                 in
                 ( mod
-                , Cmd.none
+                , commandToCmd cmd
+                  -- , Cmd.none
                   -- , Cmd.batch
                   --     [ -- wssend <|
                   --       --     WebSocket.Connect
@@ -112,6 +119,10 @@ main =
                     ]
         , update =
             \msg mod ->
+                let
+                    _ =
+                        Debug.log "msg " msg
+                in
                 case ( msg, mod.state ) of
                     ( LeMsg sm, LayoutEdit lemodel ) ->
                         let
@@ -121,20 +132,20 @@ main =
                                     lemodel
                         in
                         ( { mod | state = LayoutEdit umod }
+                        , commandToCmd cmd
+                        )
+
+                    ( TextSize (Ok tsr), LayoutEdit lemodel ) ->
+                        let
+                            _ =
+                                Debug.log "textsize" tsr
+                        in
+                        ( { mod | state = LayoutEdit (LayoutEdit.onTextSize tsr lemodel) }
                         , Cmd.none
                         )
 
                     _ ->
                         ( mod, Cmd.none )
-
-        -- TextSize ts ->
-        --     case ts of
-        --         Ok tsr ->
-        --             ( { mod | scpModel = LayoutEdit.onTextSize tsr mod.scpModel }
-        --             , Cmd.none
-        --             )
-        --         Err _ ->
-        --             ( mod, Cmd.none )
         , view =
             \model ->
                 case model.state of

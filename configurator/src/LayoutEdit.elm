@@ -1,4 +1,4 @@
-module LayoutEdit exposing (Model, Msg(..), buttonStyle, update, view)
+module LayoutEdit exposing (Model, Msg(..), buttonStyle, onTextSize, update, view)
 
 -- import Dialog as D
 -- import TangoColors as TC
@@ -18,6 +18,7 @@ import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
 import SvgControl.SvgControl as SvgControl
 import SvgControl.SvgLabel as SvgLabel
 import SvgControl.SvgSlider as SvgSlider
+import SvgControl.SvgTextSize exposing (TextSizeReply)
 import SvgControl.SvgThings as SvgThings exposing (ControlId)
 import SvgControl.SvgXY as SvgXY
 import SvgControl.Util as Util
@@ -58,6 +59,11 @@ type alias Model =
     }
 
 
+onTextSize : TextSizeReply -> Model -> Model
+onTextSize tsr model =
+    { model | scpModel = SvgControlPage.onTextSize tsr model.scpModel }
+
+
 controlTree : Maybe ControlId -> SvgControlPage.Model -> Element Msg
 controlTree mbselected svgmod =
     let
@@ -76,7 +82,7 @@ controlTreeH indent mbselected spec =
                 { top = 0
                 , right = 0
                 , bottom = 0
-                , left = indent * 100
+                , left = indent * 20
                 }
             , EE.onClick (TreeRowClicked controlid)
             ]
