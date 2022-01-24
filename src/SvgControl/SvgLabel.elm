@@ -133,9 +133,6 @@ resize model rect =
 view : UiTheme -> Model -> Svg Msg
 view theme model =
     let
-        _ =
-            Debug.log "svglabel model" model
-
         lbrect =
             rect
                 [ x model.srect.x

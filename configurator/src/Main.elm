@@ -58,10 +58,6 @@ type alias Model =
 
 commandToCmd : SvgCommand.Command SvgControl.UpdateMessage -> Cmd Msg
 commandToCmd scmd =
-    let
-        _ =
-            Debug.log "commaandToCmd" scmd
-    in
     case scmd of
         Send dta ->
             Cmd.none
@@ -119,10 +115,6 @@ main =
                     ]
         , update =
             \msg mod ->
-                let
-                    _ =
-                        Debug.log "msg " msg
-                in
                 case ( msg, mod.state ) of
                     ( LeMsg sm, LayoutEdit lemodel ) ->
                         let
@@ -136,10 +128,6 @@ main =
                         )
 
                     ( TextSize (Ok tsr), LayoutEdit lemodel ) ->
-                        let
-                            _ =
-                                Debug.log "textsize" tsr
-                        in
                         ( { mod | state = LayoutEdit (LayoutEdit.onTextSize tsr lemodel) }
                         , Cmd.none
                         )
