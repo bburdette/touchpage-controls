@@ -268,7 +268,11 @@ update msg model =
                 (SvgControl.CsLabel (SvgLabel.Spec "name" "label"))
 
         ScpMsg scpmsg ->
-            ( model, None )
+            let
+                ( nscpm, cmd ) =
+                    SvgControlPage.update scpmsg model.scpModel
+            in
+            ( { model | scpModel = nscpm }, cmd )
 
 
 

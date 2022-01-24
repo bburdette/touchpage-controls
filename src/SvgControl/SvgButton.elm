@@ -1,4 +1,4 @@
-module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, update, view, toSpec)
+module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, toSpec, update, view)
 
 import Dict
 import Html exposing (Html)
