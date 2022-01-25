@@ -4,6 +4,7 @@ module SvgControlPage exposing
     , Model
     , Msg(..)
     , Spec
+    , deleteControl
     , init
     , jsMessage
     , jsSpec
@@ -24,7 +25,7 @@ import Svg.Attributes as SA exposing (height, viewBox, width, x, y)
 import SvgControl.SvgCommand exposing (Command(..))
 import SvgControl.SvgControl as SvgControl
 import SvgControl.SvgTextSize exposing (TextSizeReply)
-import SvgControl.SvgThings exposing (Orientation(..), Rect, SRect, UiColor(..), UiTheme, colorFun, defaultColors, toSRect)
+import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, SRect, UiColor(..), UiTheme, colorFun, defaultColors, toSRect)
 import SvgControl.Util exposing (RectSize, andMap)
 import VirtualDom as VD
 
@@ -154,6 +155,29 @@ resize newSize model =
 onTextSize : TextSizeReply -> Model -> Model
 onTextSize tsr model =
     { model | control = SvgControl.onTextSize model.uiTheme tsr model.control }
+
+
+deleteControl : ControlId -> Model -> ( Model, Command SvgControl.UpdateMessage )
+deleteControl cid model =
+    case SvgControl.deleteControlH cid model.control of
+        Just nmod ->
+            let
+                spec =
+                    SvgControl.toSpec nmod
+
+                ( conmod, cmd ) =
+                    SvgControl.init model.mahrect [] spec
+
+                ( updmod, cmds ) =
+                    SvgControl.update_list [] conmod
+            in
+            ( { model | control = updmod }
+            , Batch (cmd :: cmds)
+            )
+
+        Nothing ->
+            -- can't delete the last control?
+            ( model, None )
 
 
 init :

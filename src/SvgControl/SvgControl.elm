@@ -11,6 +11,7 @@ module SvgControl.SvgControl exposing
     , border
     , controlId
     , controlName
+    , deleteControlH
     , findControl
     , firstJust
     , init
@@ -32,6 +33,7 @@ module SvgControl.SvgControl exposing
     , szupdate
     , szview
     , toCtrlMsg
+    , toSpec
     , tupMap2
     , update
     , update_list
@@ -125,6 +127,50 @@ replaceControl controlid newspec rect =
 envelopControl : ControlId -> SzSpec -> Rect -> Spec -> ( Model, Command UpdateMessage )
 envelopControl controlid newspec r s =
     init r controlid (CsSizer { newspec | controls = [ s ] })
+
+
+
+-- doesn't update rect, or controlid or anything.  probably should rebuild from spec.
+
+
+deleteControlH : ControlId -> Model -> Maybe Model
+deleteControlH cid model =
+    let
+        mbmod =
+            \m a ->
+                if m.cid == cid then
+                    Nothing
+
+                else
+                    Just a
+    in
+    case model of
+        CmButton m ->
+            mbmod m model
+
+        CmSlider m ->
+            mbmod m model
+
+        CmXY m ->
+            mbmod m model
+
+        CmLabel m ->
+            mbmod m model
+
+        CmSizer m ->
+            if m.cid == cid then
+                Nothing
+
+            else
+                Just <|
+                    CmSizer
+                        { m
+                            | controls =
+                                m.controls
+                                    |> Dict.toList
+                                    |> List.filterMap (\( k, v ) -> deleteControlH cid v |> Maybe.map (\nv -> ( k, v )))
+                                    |> Dict.fromList
+                        }
 
 
 addControl : ControlId -> Spec -> Model -> ( Model, Command UpdateMessage )

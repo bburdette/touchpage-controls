@@ -1,9 +1,5 @@
 module LayoutEdit exposing (Model, Msg(..), buttonStyle, onTextSize, update, view)
 
--- import Dialog as D
--- import TangoColors as TC
--- exposing (SvgControlPage)
-
 import Dict
 import Element as E exposing (Element)
 import Element.Background as EBk
@@ -26,11 +22,6 @@ import SvgControlPage
 import Toop
 
 
-
--- import Util
--- import WindowKeys as WK
-
-
 buttonStyle =
     [ EBk.color Color.blueberrySoda
     , EF.color Color.hintOfPensive
@@ -48,6 +39,7 @@ type Msg
     | AddVSizerPress
     | AddXYPress
     | AddLabelPress
+    | DeletePress
     | TreeRowClicked ControlId
     | ScpMsg SvgControlPage.Msg
 
@@ -114,7 +106,14 @@ controlTreeH indent mbselected spec =
                         |> List.map (controlTreeH (indent + 1) mbselected)
                         |> List.concat
             in
-            E.row (rowattribs cmod.cid) [ E.text "Sizer" ] :: moar
+            E.row (rowattribs cmod.cid)
+                [ if cmod.orientation == SvgThings.Horizontal then
+                    E.text "HSizer"
+
+                  else
+                    E.text "VSizer"
+                ]
+                :: moar
 
 
 
@@ -165,6 +164,10 @@ view size model =
             , EI.button buttonStyle
                 { onPress = Just AddLabelPress
                 , label = E.text "Add Label"
+                }
+            , EI.button buttonStyle
+                { onPress = Just DeletePress
+                , label = E.text "Delete"
                 }
             ]
         , controlTree model.selected model.scpModel
@@ -249,23 +252,39 @@ update msg model =
 
         AddButtonPress ->
             addcontrol
-                (SvgControl.CsButton (SvgButton.Spec "test" (Just "test button")))
+                (SvgControl.CsButton (SvgButton.Spec "test" Nothing))
 
         AddHSliderPress ->
             addcontrol
-                (SvgControl.CsSlider (SvgSlider.Spec "" Nothing SvgThings.Horizontal))
+                (SvgControl.CsSlider (SvgSlider.Spec "hslider" Nothing SvgThings.Horizontal))
 
         AddVSliderPress ->
             addcontrol
-                (SvgControl.CsSlider (SvgSlider.Spec "" Nothing SvgThings.Vertical))
+                (SvgControl.CsSlider (SvgSlider.Spec "vslider" Nothing SvgThings.Vertical))
 
         AddXYPress ->
             addcontrol
-                (SvgControl.CsXY (SvgXY.Spec "test" (Just "test button")))
+                (SvgControl.CsXY (SvgXY.Spec "test" Nothing))
 
         AddLabelPress ->
             addcontrol
                 (SvgControl.CsLabel (SvgLabel.Spec "name" "label"))
+
+        DeletePress ->
+            case model.selected of
+                Just cid ->
+                    let
+                        ( sm, c ) =
+                            SvgControlPage.deleteControl cid model.scpModel
+                    in
+                    ( { model
+                        | scpModel = sm
+                      }
+                    , c
+                    )
+
+                Nothing ->
+                    ( model, None )
 
         ScpMsg scpmsg ->
             let
@@ -276,14 +295,6 @@ update msg model =
 
 
 
--- ScpMsg sm ->
---     let
---         ( umod, cmd ) =
---             SvgControlPage.update sm mod.scpModel
---     in
---     ( { mod | scpModel = umod }
---     , commandToCmd cmd
---     )
 -- handleSPUpdate : Model -> ( SP.Model, SP.Command ) -> ( Model, Command )
 -- handleSPUpdate model ( nm, cm ) =
 --     let
