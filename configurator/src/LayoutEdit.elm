@@ -1,4 +1,4 @@
-module LayoutEdit exposing (Model, Msg(..), buttonStyle, onTextSize, update, view)
+module LayoutEdit exposing (Model, Msg(..), buttonStyle, init, onTextSize, update, view)
 
 import Dict
 import Element as E exposing (Element)
@@ -11,11 +11,11 @@ import Element.Region
 import FlatColors.BritishPalette as Color
 import SvgControl.SvgButton as SvgButton
 import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
-import SvgControl.SvgControl as SvgControl
+import SvgControl.SvgControl as SvgControl exposing (getControl)
 import SvgControl.SvgLabel as SvgLabel
 import SvgControl.SvgSlider as SvgSlider
 import SvgControl.SvgTextSize exposing (TextSizeReply)
-import SvgControl.SvgThings as SvgThings exposing (ControlId)
+import SvgControl.SvgThings as SvgThings exposing (ControlId, Orientation(..))
 import SvgControl.SvgXY as SvgXY
 import SvgControl.Util as Util
 import SvgControlPage
@@ -41,6 +41,9 @@ type Msg
     | AddLabelPress
     | DeletePress
     | TreeRowClicked ControlId
+    | EdNameChanged String
+    | EdLabelChanged String
+    | EdOrientationChanged Orientation
     | ScpMsg SvgControlPage.Msg
 
 
@@ -48,6 +51,9 @@ type alias Model =
     { scpModel : SvgControlPage.Model
     , size : Util.RectSize
     , selected : Maybe ControlId
+    , edname : Maybe String
+    , edlabel : Maybe String
+    , edorientation : Maybe Orientation
     }
 
 
@@ -66,7 +72,7 @@ controlTree mbselected svgmod =
 
 
 controlTreeH : Int -> Maybe ControlId -> SvgControl.Model -> List (Element Msg)
-controlTreeH indent mbselected spec =
+controlTreeH indent mbselected model =
     let
         rowattribs controlid =
             [ E.spacing 10
@@ -79,24 +85,55 @@ controlTreeH indent mbselected spec =
             , EE.onClick (TreeRowClicked controlid)
             ]
                 ++ (if Just controlid == mbselected then
-                        [ EBk.color Color.blueNights ]
+                        [ EBk.color Color.mattPurple ]
 
                     else
                         []
                    )
+
+        showId =
+            \cid ->
+                cid
+                    |> List.map String.fromInt
+                    |> List.intersperse ","
+                    |> String.concat
     in
-    case spec of
+    case model of
         SvgControl.CmButton cmod ->
-            [ E.row (rowattribs cmod.cid) [ E.text "Button", E.text cmod.name, E.text cmod.label ] ]
+            [ E.row (rowattribs cmod.cid)
+                [ E.text "Button"
+                , E.text cmod.name
+                , E.text cmod.label
+                , E.text <| showId cmod.cid
+                ]
+            ]
 
         SvgControl.CmSlider cmod ->
-            [ E.row (rowattribs cmod.cid) [ E.text "Slider", E.text cmod.name, E.text cmod.label ] ]
+            [ E.row (rowattribs cmod.cid)
+                [ E.text "Slider"
+                , E.text cmod.name
+                , E.text cmod.label
+                , E.text <| showId cmod.cid
+                ]
+            ]
 
         SvgControl.CmXY cmod ->
-            [ E.row (rowattribs cmod.cid) [ E.text "XY", E.text cmod.name, E.text cmod.label ] ]
+            [ E.row (rowattribs cmod.cid)
+                [ E.text "XY"
+                , E.text cmod.name
+                , E.text cmod.label
+                , E.text <| showId cmod.cid
+                ]
+            ]
 
         SvgControl.CmLabel cmod ->
-            [ E.row (rowattribs cmod.cid) [ E.text "Label", E.text cmod.name, E.text cmod.label ] ]
+            [ E.row (rowattribs cmod.cid)
+                [ E.text "Label"
+                , E.text cmod.name
+                , E.text cmod.label
+                , E.text <| showId cmod.cid
+                ]
+            ]
 
         SvgControl.CmSizer cmod ->
             let
@@ -112,6 +149,7 @@ controlTreeH indent mbselected spec =
 
                   else
                     E.text "VSizer"
+                , E.text <| showId cmod.cid
                 ]
                 :: moar
 
@@ -124,6 +162,50 @@ controlTreeH indent mbselected spec =
 --             handleSPUpdate model (SP.onEnter model.spmodel)
 --         _ ->
 --             ( model, None )
+
+
+editPanel : Model -> Element Msg
+editPanel model =
+    E.column
+        [ EBk.color Color.mattPurple
+        , E.padding 10
+        ]
+    <|
+        List.filterMap identity
+            [ model.edname
+                |> Maybe.map
+                    (\name ->
+                        EI.text []
+                            { onChange = EdNameChanged
+                            , text = name
+                            , placeholder = Nothing
+                            , label = EI.labelLeft [] (E.text "name")
+                            }
+                    )
+            , model.edlabel
+                |> Maybe.map
+                    (\label ->
+                        EI.text []
+                            { onChange = EdLabelChanged
+                            , text = label
+                            , placeholder = Nothing
+                            , label = EI.labelLeft [] (E.text "label")
+                            }
+                    )
+            , model.edorientation
+                |> Maybe.map
+                    (\o ->
+                        EI.radio []
+                            { onChange = EdOrientationChanged
+                            , options =
+                                [ EI.option Horizontal <| E.text "horizontal"
+                                , EI.option Vertical <| E.text "vertical"
+                                ]
+                            , selected = Just o
+                            , label = EI.labelLeft [] (E.text "orientation")
+                            }
+                    )
+            ]
 
 
 view : Util.RectSize -> Model -> Element Msg
@@ -170,9 +252,23 @@ view size model =
                 , label = E.text "Delete"
                 }
             ]
-        , controlTree model.selected model.scpModel
+        , E.column [ E.spacing 15 ]
+            [ controlTree model.selected model.scpModel
+            , editPanel model
+            ]
         , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
         ]
+
+
+init : SvgControlPage.Model -> Util.RectSize -> Maybe ControlId -> Model
+init scpModel size selected =
+    { scpModel = scpModel
+    , size = size
+    , selected = selected
+    , edname = Nothing
+    , edlabel = Nothing
+    , edorientation = Nothing
+    }
 
 
 initScp : SvgThings.Rect -> SvgControl.Spec -> ( SvgControlPage.Model, Command SvgControl.UpdateMessage )
@@ -190,6 +286,80 @@ initScp size spec =
             Nothing
             Nothing
         )
+
+
+focusFields : SvgControl.Model -> Model -> Model
+focusFields control model =
+    case control of
+        SvgControl.CmButton mod ->
+            { model
+                | edname = Just mod.name
+                , edlabel = Just mod.label
+                , edorientation = Nothing
+            }
+
+        SvgControl.CmSlider mod ->
+            { model
+                | edname = Just mod.name
+                , edlabel = Just mod.label
+                , edorientation = Nothing
+            }
+
+        SvgControl.CmXY mod ->
+            { model
+                | edname = Just mod.name
+                , edlabel = Just mod.label
+                , edorientation = Nothing
+            }
+
+        SvgControl.CmLabel mod ->
+            { model
+                | edname = Just mod.name
+                , edlabel = Just mod.label
+                , edorientation = Nothing
+            }
+
+        SvgControl.CmSizer mod ->
+            { model
+                | edname = Nothing
+                , edlabel = Nothing
+                , edorientation = Just mod.orientation
+            }
+
+
+focusFieldsMod : SvgControl.Model -> Model -> SvgControl.Model
+focusFieldsMod control model =
+    case control of
+        SvgControl.CmButton mod ->
+            SvgControl.CmButton
+                { mod
+                    | name = model.edname |> Maybe.withDefault mod.name
+                    , label = model.edlabel |> Maybe.withDefault mod.label
+                }
+
+        SvgControl.CmSlider mod ->
+            SvgControl.CmSlider
+                { mod
+                    | name = model.edname |> Maybe.withDefault mod.name
+                    , label = model.edlabel |> Maybe.withDefault mod.label
+                }
+
+        SvgControl.CmXY mod ->
+            SvgControl.CmXY
+                { mod
+                    | name = model.edname |> Maybe.withDefault mod.name
+                    , label = model.edlabel |> Maybe.withDefault mod.label
+                }
+
+        SvgControl.CmLabel mod ->
+            SvgControl.CmLabel
+                { mod
+                    | name = model.edname |> Maybe.withDefault mod.name
+                    , label = model.edlabel |> Maybe.withDefault mod.label
+                }
+
+        SvgControl.CmSizer mod ->
+            SvgControl.CmSizer { mod | orientation = model.edorientation |> Maybe.withDefault mod.orientation }
 
 
 update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
@@ -210,25 +380,71 @@ update msg model =
                             sm =
                                 model.scpModel
                         in
-                        ( { model
-                            | scpModel = { sm | control = nc }
-                          }
+                        ( doFocusFields
+                            { model
+                                | scpModel = { sm | control = nc }
+                            }
                         , c
                         )
 
                     Nothing ->
                         ( model, None )
+
+        doFocusFields =
+            \mdl ->
+                mdl.selected
+                    |> Maybe.andThen (\sid -> getControl sid mdl.scpModel.control)
+                    |> Maybe.map (\control -> focusFields control mdl)
+                    |> Maybe.withDefault { mdl | edname = Nothing, edlabel = Nothing, edorientation = Nothing }
+
+        modSelected =
+            \mdl ->
+                mdl.selected
+                    |> Maybe.andThen
+                        (\sid ->
+                            getControl sid mdl.scpModel.control
+                                |> Maybe.map
+                                    (\control ->
+                                        let
+                                            nc =
+                                                Debug.log "ffm" <|
+                                                    focusFieldsMod
+                                                        control
+                                                        mdl
+
+                                            sm =
+                                                mdl.scpModel
+
+                                            ( nc2, _ ) =
+                                                SvgControl.modControl
+                                                    sid
+                                                    (\_ ->
+                                                        ( nc, None )
+                                                    )
+                                                    sm.control
+
+                                            ( nc3, upd ) =
+                                                SvgControl.resize nc2 mdl.scpModel.mahrect
+                                        in
+                                        ( { mdl | scpModel = { sm | control = nc3 } }, upd )
+                                    )
+                        )
+                    |> Maybe.withDefault ( mdl, None )
     in
     case msg of
         TreeRowClicked controlid ->
-            ( { model
-                | selected =
+            let
+                selected =
                     if model.selected == Just controlid then
                         Nothing
 
                     else
                         Just controlid
-              }
+            in
+            ( doFocusFields
+                { model
+                    | selected = selected
+                }
             , None
             )
 
@@ -277,9 +493,10 @@ update msg model =
                         ( sm, c ) =
                             SvgControlPage.deleteControl cid model.scpModel
                     in
-                    ( { model
-                        | scpModel = sm
-                      }
+                    ( doFocusFields
+                        { model
+                            | scpModel = sm
+                        }
                     , c
                     )
 
@@ -292,6 +509,15 @@ update msg model =
                     SvgControlPage.update scpmsg model.scpModel
             in
             ( { model | scpModel = nscpm }, cmd )
+
+        EdNameChanged string ->
+            modSelected { model | edname = Just string }
+
+        EdLabelChanged string ->
+            modSelected { model | edlabel = Just string }
+
+        EdOrientationChanged orientation ->
+            modSelected { model | edorientation = Just orientation }
 
 
 

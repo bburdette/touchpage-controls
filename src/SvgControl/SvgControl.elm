@@ -14,6 +14,7 @@ module SvgControl.SvgControl exposing
     , deleteControlH
     , findControl
     , firstJust
+    , getControl
     , init
     , jsCs
     , jsSpec
@@ -135,42 +136,27 @@ envelopControl controlid newspec r s =
 
 deleteControlH : ControlId -> Model -> Maybe Model
 deleteControlH cid model =
-    let
-        mbmod =
-            \m a ->
-                if m.cid == cid then
+    case cid of
+        [] ->
+            Nothing
+
+        id :: rest ->
+            case model of
+                CmSizer m ->
+                    case Dict.get id m.controls of
+                        Nothing ->
+                            Just model
+
+                        Just c ->
+                            case deleteControlH rest c of
+                                Nothing ->
+                                    Just <| CmSizer { m | controls = Dict.remove id m.controls }
+
+                                Just nc ->
+                                    Just <| CmSizer { m | controls = Dict.insert id nc m.controls }
+
+                _ ->
                     Nothing
-
-                else
-                    Just a
-    in
-    case model of
-        CmButton m ->
-            mbmod m model
-
-        CmSlider m ->
-            mbmod m model
-
-        CmXY m ->
-            mbmod m model
-
-        CmLabel m ->
-            mbmod m model
-
-        CmSizer m ->
-            if m.cid == cid then
-                Nothing
-
-            else
-                Just <|
-                    CmSizer
-                        { m
-                            | controls =
-                                m.controls
-                                    |> Dict.toList
-                                    |> List.filterMap (\( k, v ) -> deleteControlH cid v |> Maybe.map (\nv -> ( k, v )))
-                                    |> Dict.fromList
-                        }
 
 
 addControl : ControlId -> Spec -> Model -> ( Model, Command UpdateMessage )
@@ -271,6 +257,26 @@ modControl cid f model =
 
             else
                 ( model, None )
+
+
+getControl : ControlId -> Model -> Maybe Model
+getControl cid model =
+    case cid of
+        id :: rest ->
+            case model of
+                CmSizer m ->
+                    case Dict.get id m.controls of
+                        Just c ->
+                            getControl rest c
+
+                        Nothing ->
+                            Nothing
+
+                _ ->
+                    Nothing
+
+        [] ->
+            Just model
 
 
 encodeUpdateMessage : UpdateMessage -> JD.Value
