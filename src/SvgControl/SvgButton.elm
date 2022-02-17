@@ -1,4 +1,4 @@
-module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, toSpec, update, view)
+module SvgControl.SvgButton exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, buttonEvt, encodeSpec, encodeUpdateMessage, encodeUpdateType, init, jsSpec, jsUpdateMessage, jsUpdateType, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, pressedColor, pressup, resize, toSpec, update, view)
 
 import Dict
 import Html exposing (Html)
@@ -26,6 +26,22 @@ jsSpec =
     JD.map2 Spec
         (JD.field "name" JD.string)
         (JD.maybe (JD.field "label" JD.string))
+
+
+encodeSpec : Spec -> JE.Value
+encodeSpec spec =
+    JE.object
+        (( "name"
+         , JE.string spec.name
+         )
+            :: (case spec.label of
+                    Nothing ->
+                        []
+
+                    Just l ->
+                        [ ( "label", JE.string l ) ]
+               )
+        )
 
 
 type alias Model =

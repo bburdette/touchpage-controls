@@ -9,6 +9,7 @@ import Element.Font as EF
 import Element.Input as EI
 import Element.Region
 import FlatColors.BritishPalette as Color
+import Json.Encode as JE
 import SvgControl.SvgButton as SvgButton
 import SvgControl.SvgCommand as SvgCommand exposing (Command(..))
 import SvgControl.SvgControl as SvgControl exposing (getControl)
@@ -218,7 +219,7 @@ view size model =
             85
     in
     E.row [ E.width E.fill, E.spacing 8 ]
-        [ E.column [ E.spacing 8 ]
+        [ E.column [ E.spacing 8, E.alignTop ]
             [ EI.button buttonStyle
                 { onPress = Just AddHSizerPress
                 , label = E.text "Add HSizer"
@@ -252,11 +253,14 @@ view size model =
                 , label = E.text "Delete"
                 }
             ]
-        , E.column [ E.spacing 15 ]
+        , E.column [ E.spacing 15, E.alignTop ]
             [ controlTree model.selected model.scpModel
             , editPanel model
             ]
-        , E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
+        , E.column [ E.centerX ]
+            [ E.el [ E.centerX, E.centerY ] <| E.map ScpMsg <| E.html (SvgControlPage.view model.scpModel)
+            , E.text (model.scpModel.control |> SvgControl.toSpec |> SvgControl.encodeSpec |> JE.encode 4)
+            ]
         ]
 
 

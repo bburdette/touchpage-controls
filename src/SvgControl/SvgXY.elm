@@ -5,6 +5,7 @@ module SvgControl.SvgXY exposing
     , UpdateMessage
     , UpdateType(..)
     , buildEvtHandlerList
+    , encodeSpec
     , encodeUpdateMessage
     , encodeUpdateType
     , getLocation
@@ -57,6 +58,22 @@ jsSpec =
     JD.map2 Spec
         (JD.field "name" JD.string)
         (JD.maybe (JD.field "label" JD.string))
+
+
+encodeSpec : Spec -> JE.Value
+encodeSpec spec =
+    JE.object
+        (( "name"
+         , JE.string spec.name
+         )
+            :: (case spec.label of
+                    Nothing ->
+                        []
+
+                    Just l ->
+                        [ ( "label", JE.string l ) ]
+               )
+        )
 
 
 type alias Model =

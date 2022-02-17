@@ -12,6 +12,7 @@ module SvgControl.SvgControl exposing
     , controlId
     , controlName
     , deleteControlH
+    , encodeSpec
     , findControl
     , firstJust
     , getControl
@@ -46,6 +47,7 @@ module SvgControl.SvgControl exposing
 import Dict exposing (..)
 import Html
 import Json.Decode as JD
+import Json.Encode as JE
 import List exposing (..)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -54,7 +56,7 @@ import SvgControl.SvgCommand exposing (Command(..), cmdMap)
 import SvgControl.SvgLabel as SvgLabel
 import SvgControl.SvgSlider as SvgSlider
 import SvgControl.SvgTextSize exposing (TextSizeReply, calcTextSvg, onTextSizeReply)
-import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, UiColor(..), UiTheme, containsXY, hrects, hrectsp, jsOrientation, shrinkRect, vrects, vrectsp)
+import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, UiColor(..), UiTheme, containsXY, encodeOrientation, hrects, hrectsp, jsOrientation, shrinkRect, vrects, vrectsp)
 import SvgControl.SvgXY as SvgXY
 import Task
 import VirtualDom as VD
@@ -138,7 +140,12 @@ deleteControlH : ControlId -> Model -> Maybe Model
 deleteControlH cid model =
     case cid of
         [] ->
-            Nothing
+            case model of
+                CmSizer m ->
+                    List.head (Dict.values m.controls)
+
+                _ ->
+                    Nothing
 
         id :: rest ->
             case model of
@@ -393,6 +400,25 @@ resize model rect =
 
         CmSizer mod ->
             aptg CmSizer (cmdMap UmSizer) <| szresize mod rect
+
+
+encodeSpec : Spec -> JE.Value
+encodeSpec spec =
+    case spec of
+        CsButton svgButtonSpec ->
+            SvgButton.encodeSpec svgButtonSpec
+
+        CsSlider svgSliderSpec ->
+            SvgSlider.encodeSpec svgSliderSpec
+
+        CsXY svgXYSpec ->
+            SvgXY.encodeSpec svgXYSpec
+
+        CsLabel svgLabelSpec ->
+            SvgLabel.encodeSpec svgLabelSpec
+
+        CsSizer szSpec ->
+            encodeSzSpec szSpec
 
 
 jsSpec : JD.Decoder Spec
@@ -662,6 +688,21 @@ jsSzSpec =
                 (\x -> JD.succeed (Maybe.map processProps x))
         )
         (JD.field "controls" (JD.list (JD.lazy (\_ -> jsSpec))))
+
+
+encodeSzSpec : SzSpec -> JE.Value
+encodeSzSpec spec =
+    JE.object
+        (( "orientation", encodeOrientation spec.orientation )
+            :: ( "controls", JE.list encodeSpec spec.controls )
+            :: (case spec.proportions of
+                    Nothing ->
+                        []
+
+                    Just ps ->
+                        [ ( "proportions", JE.list JE.float ps ) ]
+               )
+        )
 
 
 szFindControl : SzModel -> Int -> Int -> Maybe Model

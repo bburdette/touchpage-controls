@@ -1,4 +1,4 @@
-module SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, SRect, UiColor(..), UiTheme, colorFun, containsXY, decodeControlId, defaultColors, defaultTheme, encodeControlId, hrects, hrectsp, jsOrientation, mekhr, mekhrp, mekvr, mekvrp, processProps, shrinkRect, somme, toSRect, vrects, vrectsp)
+module SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, SRect, UiColor(..), UiTheme, colorFun, containsXY, decodeControlId, defaultColors, defaultTheme, encodeControlId, encodeOrientation, hrects, hrectsp, jsOrientation, mekhr, mekhrp, mekvr, mekvrp, processProps, shrinkRect, somme, toSRect, vrects, vrectsp)
 
 import Json.Decode as JD
 import Json.Encode as JE
@@ -105,6 +105,16 @@ jsOrientation o =
 
         _ ->
             JD.succeed Horizontal
+
+
+encodeOrientation : Orientation -> JE.Value
+encodeOrientation o =
+    case o of
+        Vertical ->
+            JE.string "vertical"
+
+        Horizontal ->
+            JE.string "horizontal"
 
 
 type alias ControlId =

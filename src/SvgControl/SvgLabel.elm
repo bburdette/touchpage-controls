@@ -1,4 +1,4 @@
-module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, encodeUpdateMessage, init, jsSpec, jsUpdateMessage, resize, toSpec, update, view)
+module SvgControl.SvgLabel exposing (Model, Msg(..), Spec, UpdateMessage, encodeSpec, encodeUpdateMessage, init, jsSpec, jsUpdateMessage, resize, toSpec, update, view)
 
 import Html exposing (Html)
 import Html.Events exposing (onClick, onMouseDown, onMouseOut, onMouseUp)
@@ -27,6 +27,16 @@ jsSpec =
     JD.map2 Spec
         (JD.field "name" JD.string)
         (JD.field "label" JD.string)
+
+
+encodeSpec : Spec -> JE.Value
+encodeSpec spec =
+    JE.object
+        [ ( "name"
+          , JE.string spec.name
+          )
+        , ( "label", JE.string spec.label )
+        ]
 
 
 type alias Model =

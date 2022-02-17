@@ -1,4 +1,4 @@
-module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, toSpec, update, updsend, view)
+module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, UpdateType(..), buildEvtHandlerList, encodeSpec, encodeUpdateMessage, encodeUpdateType, getLocation, getX, getY, init, jsSpec, jsUpdateMessage, jsUpdateType, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, onTouchCancel, onTouchEnd, onTouchLeave, onTouchMove, onTouchStart, resize, sliderEvt, toSpec, update, updsend, view)
 
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 
@@ -10,7 +10,7 @@ import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick, onMouseDown, onMouseOut, onMouseUp)
 import SvgControl.SvgCommand exposing (Command(..))
 import SvgControl.SvgTextSize exposing (calcTextSvg, calcTextSvgM, resizeCommand)
-import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, SRect, UiColor(..), UiTheme, decodeControlId, encodeControlId, jsOrientation)
+import SvgControl.SvgThings exposing (ControlId, Orientation(..), Rect, SRect, UiColor(..), UiTheme, decodeControlId, encodeControlId, encodeOrientation, jsOrientation)
 import SvgControl.SvgTouch as ST
 import Toop
 import VirtualDom as VD
@@ -29,6 +29,23 @@ jsSpec =
         (JD.field "name" JD.string)
         (JD.maybe (JD.field "label" JD.string))
         (JD.field "orientation" JD.string |> JD.andThen jsOrientation)
+
+
+encodeSpec : Spec -> JE.Value
+encodeSpec spec =
+    JE.object
+        (( "name"
+         , JE.string spec.name
+         )
+            :: ( "orientation", encodeOrientation spec.orientation )
+            :: (case spec.label of
+                    Nothing ->
+                        []
+
+                    Just l ->
+                        [ ( "label", JE.string l ) ]
+               )
+        )
 
 
 type alias Model =
