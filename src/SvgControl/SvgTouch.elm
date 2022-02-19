@@ -19,11 +19,8 @@ import SvgControl.SvgThings as SvgThings
 
 stDebugLog : String -> b -> b
 stDebugLog a b =
-    Debug.log a b
-
-
-
--- b
+    -- Debug.log a b
+    b
 
 
 type Msg
@@ -43,7 +40,7 @@ type alias Touch =
 
 parseTouch : JD.Decoder Touch
 parseTouch =
-    JD.map3 (Debug.log "touch" >> Touch)
+    JD.map3 Touch
         (JD.field "clientX" JD.float)
         (JD.field "clientY" JD.float)
         (JD.field "identifier" JD.int)
@@ -148,7 +145,7 @@ extractTouchDict evt =
             let
                 touchresults =
                     List.map
-                        (\idx -> JD.decodeValue (JD.at [ "touches", String.fromInt idx ] parseTouch) (Debug.log "evt" evt))
+                        (\idx -> JD.decodeValue (JD.at [ "touches", String.fromInt idx ] parseTouch) evt)
                         (List.range 0 (touchcount - 1))
 
                 touches =

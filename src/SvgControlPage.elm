@@ -109,10 +109,6 @@ update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage Msg )
 update msg model =
     case msg of
         JsonMsg s ->
-            let
-                _ =
-                    Debug.log "jsonmsg" s
-            in
             case JD.decodeString jsMessage s of
                 Ok (JmSpec spec) ->
                     init model.divid model.mahrect spec

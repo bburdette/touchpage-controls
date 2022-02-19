@@ -412,10 +412,9 @@ update msg model =
                                     (\control ->
                                         let
                                             nc =
-                                                Debug.log "ffm" <|
-                                                    focusFieldsMod
-                                                        control
-                                                        mdl
+                                                focusFieldsMod
+                                                    control
+                                                    mdl
 
                                             sm =
                                                 mdl.scpModel

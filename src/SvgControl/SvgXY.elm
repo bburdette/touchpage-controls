@@ -468,10 +468,6 @@ sliderEvt evtname mkmsg =
         VD.Custom
             (JD.map
                 (\v ->
-                    let
-                        _ =
-                            Debug.log "value" v
-                    in
                     { stopPropagation = True, preventDefault = True, message = mkmsg v }
                 )
                 JD.value
