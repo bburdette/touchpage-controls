@@ -15,9 +15,10 @@ module SvgControlPage exposing
     , viewSvgControl
     )
 
+import Browser.Dom as BD
 import Dict exposing (..)
 import Html
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (attribute, style)
 import Json.Decode as JD
 import List exposing (..)
 import Svg exposing (Attribute, Svg, g, rect, svg, text)
@@ -68,6 +69,7 @@ jsSpec =
 
 type alias Model =
     { title : String
+    , divid : String
     , mahrect : Rect
     , srect : SRect
     , control : SvgControl.Model
@@ -83,6 +85,7 @@ type alias ID =
 type Msg
     = JsonMsg String
     | CMsg SvgControl.Msg
+    | CCoordMsg SvgControl.Msg BD.Element
     | Resize RectSize
     | NoOp
 
@@ -102,13 +105,17 @@ jsMessage =
         ]
 
 
-update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
+update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage Msg )
 update msg model =
     case msg of
         JsonMsg s ->
+            let
+                _ =
+                    Debug.log "jsonmsg" s
+            in
             case JD.decodeString jsMessage s of
                 Ok (JmSpec spec) ->
-                    init model.mahrect spec
+                    init model.divid model.mahrect spec
 
                 Ok (JmUpdate jmact) ->
                     update jmact model
@@ -116,7 +123,11 @@ update msg model =
                 Err e ->
                     ( { model | title = JD.errorToString e }, None )
 
-        CMsg act ->
+        CMsg cmsg ->
+            -- for every single message, we'll do a getElement.
+            ( model, GetElement model.divid (CCoordMsg cmsg) )
+
+        CCoordMsg act elt ->
             let
                 wha =
                     SvgControl.update act model.control
@@ -133,7 +144,7 @@ update msg model =
             ( model, None )
 
 
-resize : RectSize -> Model -> ( Model, Command SvgControl.UpdateMessage )
+resize : RectSize -> Model -> ( Model, Command SvgControl.UpdateMessage Msg )
 resize newSize model =
     let
         nr =
@@ -157,7 +168,7 @@ onTextSize tsr model =
     { model | control = SvgControl.onTextSize model.uiTheme tsr model.control }
 
 
-deleteControl : ControlId -> Model -> ( Model, Command SvgControl.UpdateMessage )
+deleteControl : ControlId -> Model -> ( Model, Command SvgControl.UpdateMessage Msg )
 deleteControl cid model =
     case SvgControl.deleteControlH cid model.control of
         Just nmod ->
@@ -181,10 +192,11 @@ deleteControl cid model =
 
 
 init :
-    Rect
+    String
+    -> Rect
     -> Spec
-    -> ( Model, Command SvgControl.UpdateMessage )
-init rect spec =
+    -> ( Model, Command SvgControl.UpdateMessage Msg )
+init divid rect spec =
     let
         ( conmod, cmd ) =
             SvgControl.init rect [] spec.rootControl
@@ -202,6 +214,7 @@ init rect spec =
                 (spec.backgroundColor |> Maybe.withDefault (defaultColors Background))
     in
     ( Model spec.title
+        divid
         rect
         (toSRect rect)
         updmod
@@ -216,6 +229,7 @@ view model =
     Html.div
         [ style "margin" "0"
         , style "touch-action" "none"
+        , attribute "id" model.divid
         ]
         [ Svg.svg
             [ width model.srect.w

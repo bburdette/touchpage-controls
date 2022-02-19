@@ -275,9 +275,10 @@ init scpModel size selected =
     }
 
 
-initScp : SvgThings.Rect -> SvgControl.Spec -> ( SvgControlPage.Model, Command SvgControl.UpdateMessage )
-initScp size spec =
+initScp : String -> SvgThings.Rect -> SvgControl.Spec -> ( SvgControlPage.Model, Command SvgControl.UpdateMessage SvgControlPage.Msg )
+initScp divid size spec =
     SvgControlPage.init
+        divid
         size
         (SvgControlPage.Spec
             ""
@@ -366,7 +367,7 @@ focusFieldsMod control model =
             SvgControl.CmSizer { mod | orientation = model.edorientation |> Maybe.withDefault mod.orientation }
 
 
-update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage )
+update : Msg -> Model -> ( Model, Command SvgControl.UpdateMessage SvgControlPage.Msg )
 update msg model =
     let
         addcontrol =

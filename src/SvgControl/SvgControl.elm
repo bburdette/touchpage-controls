@@ -122,12 +122,12 @@ toSpec model =
             CsSizer <| szToSpec m
 
 
-replaceControl : ControlId -> Spec -> Rect -> ( Model, Command UpdateMessage )
+replaceControl : ControlId -> Spec -> Rect -> ( Model, Command UpdateMessage a )
 replaceControl controlid newspec rect =
     init rect controlid newspec
 
 
-envelopControl : ControlId -> SzSpec -> Rect -> Spec -> ( Model, Command UpdateMessage )
+envelopControl : ControlId -> SzSpec -> Rect -> Spec -> ( Model, Command UpdateMessage a )
 envelopControl controlid newspec r s =
     init r controlid (CsSizer { newspec | controls = [ s ] })
 
@@ -166,7 +166,7 @@ deleteControlH cid model =
                     Nothing
 
 
-addControl : ControlId -> Spec -> Model -> ( Model, Command UpdateMessage )
+addControl : ControlId -> Spec -> Model -> ( Model, Command UpdateMessage a )
 addControl controlid newspec cm =
     case ( cm, newspec ) of
         ( CmButton mod, CsSizer z ) ->
@@ -204,7 +204,7 @@ addControl controlid newspec cm =
             replaceControl controlid (CsSizer { sspec | controls = sspec.controls ++ [ c ] }) mod.rect
 
 
-modControl : ControlId -> (Model -> ( Model, Command UpdateMessage )) -> Model -> ( Model, Command UpdateMessage )
+modControl : ControlId -> (Model -> ( Model, Command UpdateMessage a )) -> Model -> ( Model, Command UpdateMessage a )
 modControl cid f model =
     case model of
         CmButton m ->
@@ -379,7 +379,7 @@ tupMap2 fa ab =
     ( fa (Tuple.first ab), Tuple.second ab )
 
 
-resize : Model -> Rect -> ( Model, Command UpdateMessage )
+resize : Model -> Rect -> ( Model, Command UpdateMessage a )
 resize model rect =
     let
         aptg =
@@ -526,7 +526,7 @@ onTextSize theme tsr model =
             CmSizer <| szOnTextSize theme tsr m
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage )
+update : Msg -> Model -> ( Model, Command UpdateMessage a )
 update msg model =
     case ( msg, model ) of
         ( CaButton ms, CmButton m ) ->
@@ -572,7 +572,7 @@ update msg model =
 -- should probably produce an error.  to the user??
 
 
-update_list : List Msg -> Model -> ( Model, List (Command UpdateMessage) )
+update_list : List Msg -> Model -> ( Model, List (Command UpdateMessage a) )
 update_list msgs model =
     List.foldl
         (\msg ( mod, cmds ) ->
@@ -590,7 +590,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command UpdateMessage )
+    -> ( Model, Command UpdateMessage a )
 init rect cid spec =
     let
         aptg =
@@ -741,7 +741,7 @@ zip =
     List.map2 Tuple.pair
 
 
-szupdate : SzMsg -> SzModel -> ( SzModel, Command UpdateMessage )
+szupdate : SzMsg -> SzModel -> ( SzModel, Command UpdateMessage a )
 szupdate msg model =
     case msg of
         SzCMsg id act ->
@@ -786,7 +786,7 @@ szOnTextSize theme tsr model =
             model
 
 
-szresize : SzModel -> Rect -> ( SzModel, Command UpdateMessage )
+szresize : SzModel -> Rect -> ( SzModel, Command UpdateMessage a )
 szresize model rect =
     let
         clist =
@@ -837,7 +837,7 @@ szinit :
     Rect
     -> ControlId
     -> SzSpec
-    -> ( SzModel, Command UpdateMessage )
+    -> ( SzModel, Command UpdateMessage a )
 szinit rect cid szspec =
     let
         rlist =

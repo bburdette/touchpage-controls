@@ -1,6 +1,7 @@
 port module Main exposing (init, main)
 
 import Browser
+import Browser.Dom as BD
 import Browser.Events as BE
 import Element as E
 import Html
@@ -14,6 +15,7 @@ import SvgControl.SvgTextSize as SvgTextSize exposing (TextSizeReply, decodeText
 import SvgControl.SvgThings as SvgThings
 import SvgControl.Util exposing (RectSize)
 import SvgControlPage
+import Task
 import WebSocket
 
 
@@ -35,6 +37,7 @@ port receiveTextMetrics : (JD.Value -> msg) -> Sub msg
 type Msg
     = WsMsg (Result JD.Error WebSocket.WebSocketMsg)
     | TextSize (Result JD.Error TextSizeReply)
+    | CoordMsg (BD.Element -> LayoutEdit.Msg) (Result BD.Error BD.Element)
     | LeMsg LayoutEdit.Msg
 
 
@@ -48,6 +51,7 @@ type alias Flags =
 
 type State
     = LayoutEdit LayoutEdit.Model
+    | BDError BD.Error
 
 
 type alias Model =
@@ -56,7 +60,7 @@ type alias Model =
     }
 
 
-commandToCmd : SvgCommand.Command SvgControl.UpdateMessage -> Cmd Msg
+commandToCmd : SvgCommand.Command SvgControl.UpdateMessage SvgControlPage.Msg -> Cmd Msg
 commandToCmd scmd =
     case scmd of
         Send dta ->
@@ -72,11 +76,27 @@ commandToCmd scmd =
                 encodeTextSizeRequest <|
                     rtw
 
+        GetElement id fn ->
+            BD.getElement id
+                |> Task.attempt (CoordMsg (\elt -> LayoutEdit.ScpMsg (fn elt)))
+
         None ->
             Cmd.none
 
         Batch cmds ->
             Cmd.batch (List.map commandToCmd cmds)
+
+
+processLeMsg lemsg lemodel mod =
+    let
+        ( umod, cmd ) =
+            LayoutEdit.update
+                lemsg
+                lemodel
+    in
+    ( { mod | state = LayoutEdit umod }
+    , commandToCmd cmd
+    )
 
 
 main : Program Flags Model Msg
@@ -117,20 +137,20 @@ main =
             \msg mod ->
                 case ( msg, mod.state ) of
                     ( LeMsg sm, LayoutEdit lemodel ) ->
-                        let
-                            ( umod, cmd ) =
-                                LayoutEdit.update
-                                    sm
-                                    lemodel
-                        in
-                        ( { mod | state = LayoutEdit umod }
-                        , commandToCmd cmd
-                        )
+                        processLeMsg sm lemodel mod
 
                     ( TextSize (Ok tsr), LayoutEdit lemodel ) ->
                         ( { mod | state = LayoutEdit (LayoutEdit.onTextSize tsr lemodel) }
                         , Cmd.none
                         )
+
+                    ( CoordMsg fn res, LayoutEdit lemodel ) ->
+                        case res of
+                            Ok elt ->
+                                processLeMsg (fn elt) lemodel mod
+
+                            Err e ->
+                                ( { mod | state = BDError e }, Cmd.none )
 
                     _ ->
                         ( mod, Cmd.none )
@@ -140,10 +160,14 @@ main =
                     LayoutEdit lm ->
                         Browser.Document "svg control edit"
                             [ E.layout [] (E.map LeMsg <| LayoutEdit.view model.size lm) ]
+
+                    BDError (BD.NotFound s) ->
+                        Browser.Document "svg control edit"
+                            [ E.layout [] (E.text <| "not found: " ++ s) ]
         }
 
 
-init : Flags -> ( Model, Command SvgControl.UpdateMessage )
+init : Flags -> ( Model, Command SvgControl.UpdateMessage SvgControlPage.Msg )
 init flags =
     let
         rmargin =
@@ -152,6 +176,7 @@ init flags =
         ( sm, cmd ) =
             SvgControlPage.init
                 -- (SvgThings.Rect 0 0 (flags.width - rmargin) (flags.height - rmargin))
+                "layout"
                 (SvgThings.Rect 0 0 500 500)
                 (SvgControlPage.Spec
                     ""

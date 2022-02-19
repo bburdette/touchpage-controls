@@ -61,7 +61,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command UpdateMessage )
+    -> ( Model, Command UpdateMessage a )
 init rect cid spec =
     let
         model =
@@ -184,7 +184,7 @@ jsUpdateType ut =
             JD.succeed Unpress
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage )
+update : Msg -> Model -> ( Model, Command UpdateMessage a )
 update msg model =
     case msg of
         SvgPress ->
@@ -251,7 +251,7 @@ update msg model =
                         ( model, None )
 
 
-pressup : Model -> UpdateType -> ( Model, Command UpdateMessage )
+pressup : Model -> UpdateType -> ( Model, Command UpdateMessage a )
 pressup model ut =
     -- let
     --     um =
@@ -265,7 +265,7 @@ pressup model ut =
     )
 
 
-resize : Model -> Rect -> ( Model, Command UpdateMessage )
+resize : Model -> Rect -> ( Model, Command UpdateMessage a )
 resize model rect =
     let
         newmodel =

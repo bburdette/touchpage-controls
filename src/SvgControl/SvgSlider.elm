@@ -104,7 +104,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command UpdateMessage )
+    -> ( Model, Command UpdateMessage a )
 init rect cid spec =
     let
         model =
@@ -235,7 +235,7 @@ getLocation model v =
                     Err (JD.errorToString e)
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage )
+update : Msg -> Model -> ( Model, Command UpdateMessage a )
 update msg model =
     case msg of
         SvgPress v ->
@@ -347,7 +347,7 @@ update msg model =
                                 updsend model Nothing loc
 
 
-updsend : Model -> Maybe UpdateType -> Float -> ( Model, Command UpdateMessage )
+updsend : Model -> Maybe UpdateType -> Float -> ( Model, Command UpdateMessage a )
 updsend model mbut loc =
     let
         bLoc =
@@ -380,7 +380,7 @@ updsend model mbut loc =
         )
 
 
-resize : Model -> Rect -> ( Model, Command UpdateMessage )
+resize : Model -> Rect -> ( Model, Command UpdateMessage a )
 resize model rect =
     let
         newmodel =

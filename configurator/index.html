@@ -45,6 +45,18 @@
         });
 
     app.ports.requestTextSize.subscribe(requestTextSize);
+
+    function printevent(e) {
+      console.log("event!", e);
+    }
+
+    window.addEventListener( "touchstart", printevent, false );
+
 </script>
 </body>
 </html>
+    function printevent(e) {
+      console.log("event!", e);
+    }
+
+    window.addEventListener( "touchstart", printevent, false );

@@ -117,7 +117,7 @@ init :
     Rect
     -> ControlId
     -> Spec
-    -> ( Model, Command UpdateMessage )
+    -> ( Model, Command UpdateMessage a )
 init rect cid spec =
     let
         model =
@@ -290,7 +290,7 @@ getLocation model v =
             )
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage )
+update : Msg -> Model -> ( Model, Command UpdateMessage a )
 update msg model =
     case msg of
         SvgPress v ->
@@ -395,7 +395,7 @@ update msg model =
                         updsend model Nothing loc
 
 
-updsend : Model -> Maybe UpdateType -> ( Float, Float ) -> ( Model, Command UpdateMessage )
+updsend : Model -> Maybe UpdateType -> ( Float, Float ) -> ( Model, Command UpdateMessage a )
 updsend model mbut ( x, y ) =
     let
         lim =
@@ -432,7 +432,7 @@ updsend model mbut ( x, y ) =
         )
 
 
-resize : Model -> Rect -> ( Model, Command UpdateMessage )
+resize : Model -> Rect -> ( Model, Command UpdateMessage a )
 resize model rect =
     let
         newmodel =
@@ -463,6 +463,10 @@ sliderEvt evtname mkmsg =
         VD.Custom
             (JD.map
                 (\v ->
+                    let
+                        _ =
+                            Debug.log "value" v
+                    in
                     { stopPropagation = True, preventDefault = True, message = mkmsg v }
                 )
                 JD.value
