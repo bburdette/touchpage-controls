@@ -17,7 +17,7 @@ import SvgControl.SvgThings as SvgThings
 -}
 
 
-stDebugLog : a -> b -> b
+stDebugLog : String -> b -> b
 stDebugLog a b =
     -- Debug.log a b
     b

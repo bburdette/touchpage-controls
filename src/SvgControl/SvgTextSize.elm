@@ -114,7 +114,7 @@ resizeCommand :
         , cid : ControlId
         , stringWidth : Maybe Float
     }
-    -> Command a
+    -> Command a b
 resizeCommand model =
     case model.stringWidth of
         Nothing ->

@@ -1,5 +1,6 @@
 module SvgControl.SvgCommand exposing (Command(..), TextSizeRequest, cmdMap)
 
+import Browser.Dom as BD
 import SvgControl.SvgThings exposing (ControlId)
 
 
@@ -10,14 +11,15 @@ type alias TextSizeRequest =
     }
 
 
-type Command update
+type Command update msg
     = Send update
     | RequestTextWidth TextSizeRequest
+    | GetElement String (BD.Element -> msg)
     | None
-    | Batch (List (Command update))
+    | Batch (List (Command update msg))
 
 
-cmdMap : (upd1 -> upd2) -> Command upd1 -> Command upd2
+cmdMap : (upd1 -> upd2) -> Command upd1 msg -> Command upd2 msg
 cmdMap f cmd =
     case cmd of
         Send upd1 ->
@@ -25,6 +27,9 @@ cmdMap f cmd =
 
         RequestTextWidth t ->
             RequestTextWidth t
+
+        GetElement t fn ->
+            GetElement t fn
 
         None ->
             None
