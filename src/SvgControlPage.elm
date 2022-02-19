@@ -121,6 +121,7 @@ update msg model =
 
         CMsg cmsg ->
             -- for every single message, we'll do a getElement.
+            -- should be a scroll proof, resize proof method
             ( model, GetElement model.divid (CCoordMsg cmsg) )
 
         CCoordMsg act elt ->
@@ -177,9 +178,6 @@ deleteControl cid model =
 
                 ulcmd =
                     GetElement model.divid (CCoordMsg (SvgControl.CaState []))
-
-                -- ( updmod, cmds ) =
-                --     SvgControl.update_list [] conmod
             in
             ( { model | control = conmod }
             , Batch [ cmd, ulcmd ]
@@ -203,8 +201,6 @@ init divid rect spec =
         ulcmd =
             GetElement divid (CCoordMsg (SvgControl.CaState (Maybe.withDefault [] spec.state)))
 
-        -- ( updmod, cmds ) =
-        --     SvgControl.update_list (Maybe.withDefault [] spec.state) conmod
         colors =
             colorFun
                 (spec.controlsColor |> Maybe.withDefault (defaultColors Controls))
