@@ -130,7 +130,7 @@ update msg model =
         CCoordMsg act elt ->
             let
                 wha =
-                    SvgControl.update act model.control
+                    SvgControl.update elt act model.control
 
                 newmod =
                     { model | control = Tuple.first wha }
@@ -179,11 +179,14 @@ deleteControl cid model =
                 ( conmod, cmd ) =
                     SvgControl.init model.mahrect [] spec
 
-                ( updmod, cmds ) =
-                    SvgControl.update_list [] conmod
+                ulcmd =
+                    GetElement model.divid (CCoordMsg (SvgControl.CaState []))
+
+                -- ( updmod, cmds ) =
+                --     SvgControl.update_list [] conmod
             in
-            ( { model | control = updmod }
-            , Batch (cmd :: cmds)
+            ( { model | control = conmod }
+            , Batch [ cmd, ulcmd ]
             )
 
         Nothing ->
@@ -201,9 +204,11 @@ init divid rect spec =
         ( conmod, cmd ) =
             SvgControl.init rect [] spec.rootControl
 
-        ( updmod, cmds ) =
-            SvgControl.update_list (Maybe.withDefault [] spec.state) conmod
+        ulcmd =
+            GetElement divid (CCoordMsg (SvgControl.CaState (Maybe.withDefault [] spec.state)))
 
+        -- ( updmod, cmds ) =
+        --     SvgControl.update_list (Maybe.withDefault [] spec.state) conmod
         colors =
             colorFun
                 (spec.controlsColor |> Maybe.withDefault (defaultColors Controls))
@@ -217,10 +222,10 @@ init divid rect spec =
         divid
         rect
         (toSRect rect)
-        updmod
+        conmod
         (RectSize 0 0)
         { colorString = colors }
-    , Batch (cmd :: cmds)
+    , Batch [ cmd, ulcmd ]
     )
 
 

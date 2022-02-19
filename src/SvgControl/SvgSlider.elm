@@ -2,6 +2,7 @@ module SvgControl.SvgSlider exposing (Model, Msg(..), Spec, UpdateMessage, Updat
 
 -- import NoDragEvents exposing (onClick, onMouseUp, onMouseMove, onMouseDown, onMouseOut)
 
+import Browser.Dom as BD
 import Json.Decode as JD
 import Json.Encode as JE
 import List
@@ -235,8 +236,8 @@ getLocation model v =
                     Err (JD.errorToString e)
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage a )
-update msg model =
+update : BD.Element -> Msg -> Model -> ( Model, Command UpdateMessage a )
+update elt msg model =
     case msg of
         SvgPress v ->
             case getLocation model v of
@@ -312,7 +313,11 @@ update msg model =
             ( mod2, resizeCommand mod2 )
 
         SvgTouch stm ->
-            case ST.extractFirstRectTouchSE stm model.rect of
+            let
+                rect =
+                    model.rect |> (\r -> { r | x = r.x + round elt.element.x, y = r.y + round elt.element.y })
+            in
+            case ST.extractFirstRectTouchSE stm rect of
                 Nothing ->
                     if model.pressed then
                         updsend model (Just Unpress) model.location
@@ -325,8 +330,8 @@ update msg model =
                         Horizontal ->
                             let
                                 loc =
-                                    (touch.x - toFloat model.rect.x)
-                                        / toFloat model.rect.w
+                                    (touch.x - toFloat rect.x)
+                                        / toFloat rect.w
                             in
                             if model.pressed then
                                 updsend model (Just Press) loc
@@ -337,8 +342,8 @@ update msg model =
                         Vertical ->
                             let
                                 loc =
-                                    (touch.y - toFloat model.rect.y)
-                                        / toFloat model.rect.h
+                                    (touch.y - toFloat rect.y)
+                                        / toFloat rect.h
                             in
                             if model.pressed then
                                 updsend model (Just Press) loc

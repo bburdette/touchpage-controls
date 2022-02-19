@@ -44,6 +44,7 @@ module SvgControl.SvgControl exposing
     , zip
     )
 
+import Browser.Dom as BD
 import Dict exposing (..)
 import Html
 import Json.Decode as JD
@@ -93,6 +94,7 @@ type Msg
     | CaXY SvgXY.Msg
     | CaLabel SvgLabel.Msg
     | CaSizer SzMsg
+    | CaState (List Msg)
 
 
 type UpdateMessage
@@ -526,8 +528,8 @@ onTextSize theme tsr model =
             CmSizer <| szOnTextSize theme tsr m
 
 
-update : Msg -> Model -> ( Model, Command UpdateMessage a )
-update msg model =
+update : BD.Element -> Msg -> Model -> ( Model, Command UpdateMessage a )
+update elt msg model =
     case ( msg, model ) of
         ( CaButton ms, CmButton m ) ->
             let
@@ -539,14 +541,14 @@ update msg model =
         ( CaSlider ms, CmSlider m ) ->
             let
                 ( a, b ) =
-                    SvgSlider.update ms m
+                    SvgSlider.update elt ms m
             in
             ( CmSlider a, cmdMap UmSlider b )
 
         ( CaXY ms, CmXY m ) ->
             let
                 ( a, b ) =
-                    SvgXY.update ms m
+                    SvgXY.update elt ms m
             in
             ( CmXY a, cmdMap UmXY b )
 
@@ -560,9 +562,16 @@ update msg model =
         ( CaSizer ms, CmSizer m ) ->
             let
                 ( a, b ) =
-                    szupdate ms m
+                    szupdate elt ms m
             in
             ( CmSizer a, cmdMap UmSizer b )
+
+        ( CaState lst, _ ) ->
+            let
+                ( nm, clist ) =
+                    update_list elt lst model
+            in
+            ( nm, Batch clist )
 
         _ ->
             ( model, None )
@@ -572,13 +581,13 @@ update msg model =
 -- should probably produce an error.  to the user??
 
 
-update_list : List Msg -> Model -> ( Model, List (Command UpdateMessage a) )
-update_list msgs model =
+update_list : BD.Element -> List Msg -> Model -> ( Model, List (Command UpdateMessage a) )
+update_list elt msgs model =
     List.foldl
         (\msg ( mod, cmds ) ->
             let
                 ( modnew, cmd ) =
-                    update msg mod
+                    update elt msg mod
             in
             ( modnew, cmd :: cmds )
         )
@@ -741,8 +750,8 @@ zip =
     List.map2 Tuple.pair
 
 
-szupdate : SzMsg -> SzModel -> ( SzModel, Command UpdateMessage a )
-szupdate msg model =
+szupdate : BD.Element -> SzMsg -> SzModel -> ( SzModel, Command UpdateMessage a )
+szupdate elt msg model =
     case msg of
         SzCMsg id act ->
             let
@@ -753,7 +762,7 @@ szupdate msg model =
                 Just bm ->
                     let
                         wha =
-                            update act bm
+                            update elt act bm
 
                         updcontrols =
                             insert id (Tuple.first wha) model.controls
